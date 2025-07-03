@@ -1,0 +1,12 @@
+{
+  "example_ean_123456789": {
+    "source_id": "123456",
+    "variable_id": "789012",
+    "description": "Example EAN mapping"
+  },
+  "another_ean_987654321": {
+    "source_id": "987654",
+    "variable_id": "321098",
+    "description": "Another example EAN mapping"
+  }
+}
