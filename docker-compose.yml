@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Interface Web Renewgy Parser
+  renewgy-web-interface:
+    build: .
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./excel_files:/renewgy/excel_files
+      - ./csv_files:/renewgy/csv_files
+      - ./ean_config.json:/renewgy/ean_config.json
+    container_name: renewgy-web-interface
+    environment:
+      - FLASK_ENV=production
+      - FLASK_HOST=0.0.0.0
+      - FLASK_PORT=5000
+      - FLASK_EXTERNAL_PORT=5001
+
+  # Service CLI (pour tâches ponctuelles)
+  renewgy-cli-processor:
+    build: .
+    volumes:
+      - ./excel_files:/renewgy/excel_files
+      - ./csv_files:/renewgy/csv_files
+      - ./ean_config.json:/renewgy/ean_config.json
+    container_name: renewgy-cli-processor
+    entrypoint: ["python", "renewgy_parser.py"]
+    profiles: ["cli"]  # Démarré uniquement avec --profile cli

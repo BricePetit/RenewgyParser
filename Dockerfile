@@ -1,20 +1,29 @@
-# Dockerfile
+# Dockerfile pour Renewgy Parser - Projet Unifié
 
-# 1. Base Image.
+# 1. Base Image
 FROM python:3.13-slim
 
-# 2. Set the working directory.
-WORKDIR /parser
+# 2. Définir le répertoire de travail
+WORKDIR /renewgy
 
-# 3. Copy the requirements file.
+# 3. Copier et installer les dépendances
 COPY requirements.txt .
-
-# 4. Install the dependencies.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 5. Copy the source code and configuration files.
-COPY src/ ./src/
-COPY ean_config.json .
+# 4. Créer les dossiers de données
+RUN mkdir -p excel_files csv_files templates
 
-# 6. Define the entry point.
-ENTRYPOINT ["python", "src/renewgy_parser.py"]
+# 5. Copier les fichiers du projet unifié
+COPY renewgy_parser.py renewgy_parser_gui.py ./
+COPY templates/ ./templates/
+COPY ean_config.json ./
+
+# 6. Copier les dossiers de données s'ils existent
+COPY excel_files/ ./excel_files/
+COPY csv_files/ ./csv_files/
+
+# 7. Exposer le port pour l'interface web
+EXPOSE 5000
+
+# 8. Par défaut, lancer l'interface web (peut être surchargé)
+CMD ["python", "renewgy_parser_gui.py"]

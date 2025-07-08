@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renewgy Parser GUI Intégrée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .file-explorer {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .logs {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 12px;
+            height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        .processing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        .file-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .batch-files-list {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+        }
+        .batch-file-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            color: #333;
+        }
+        .batch-file-item:last-child {
+            border-bottom: none;
+        }
+        .batch-file-item:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .file-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .file-item:hover {
+            background-color: #f0f8ff;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item.selected {
+            background-color: #e7f3ff;
+            border-left: 3px solid #667eea;
+            font-weight: 500;
+            color: #1976d2;
+        }
+        .batch-output-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            background: white;
+        }
+        .batch-output-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 12px;
+        }
+        .batch-output-item:last-child {
+            border-bottom: none;
+        }
+        .batch-output-item:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .batch-output-label {
+            font-size: 14px;
+            color: #666;
+            min-width: 20px;
+        }
+        .batch-output-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        .batch-output-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        .batch-date-input {
+            width: 140px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            margin-left: 8px;
+        }
+        .batch-sheet-select {
+            width: 100px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+            margin-left: 8px;
+        }
+        .batch-date-input:focus,
+        .batch-sheet-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        .batch-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 Renewgy Parser GUI</h1>
+            <p>Interface Web Intégrée - Conversion Excel vers CSV</p>
+        </div>
+            <!-- Processing mode. -->
+            <div class="form-section">
+                <h3>📋 Mode de traitement</h3>
+                <div class="mode-selector">
+                    <div class="mode-btn active" onclick="selectMode('single')">📄 Fichier unique</div>
+                    <div class="mode-btn" onclick="selectMode('batch')">📁 Traitement par lots</div>
+                </div>
+            </div>
+            <!-- Files configuration. -->
+            <div class="form-section">
+                <h3>📁 Configuration des fichiers</h3>
+                <!-- Mode single. -->
+                <div id="single-mode">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sourceFile">� Fichiers sources Excel disponibles</label>
+                            <div class="file-explorer" id="sourceExplorer" style="margin-top: 10px;"></div>
+                            <small style="color: #666; font-size: 12px;">Fichiers Excel dans le dossier excel_files (affichage uniquement)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="destFile">� Nom du fichier CSV de sortie</label>
+                            <div class="file-selector">
+                                <input type="text" id="destFile" class="form-control" placeholder="output.csv" style="margin-bottom: 8px;">
+                            </div>
+                            <small style="color: #666; font-size: 12px;">Le nom du fichier CSV est généré automatiquement à partir du fichier Excel sélectionné (modifiable)</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Mode batch/ -->
+                <div id="batch-mode" style="display: none;">
+                    <div class="form-group">
+                        <label>📄 Fichiers Excel à traiter</label>
+                        <div class="batch-files-list" id="batchInputFiles" style="margin-top: 10px;"></div>
+                        <small style="color: #666; font-size: 12px;">Tous les fichiers Excel du dossier excel_files seront traités</small>
+                    </div>
+                    <div class="form-group">
+                        <label>📄 Fichiers CSV de sortie, dates et feuilles (modifiables)</label>
+                        <div class="batch-output-container" id="batchOutputContainer" style="margin-top: 10px;"></div>
+                        <small style="color: #666; font-size: 12px;">Personnalisez les noms CSV, dates de début et index de feuille Excel pour chaque fichier</small>
+                    </div>
+                </div>
+            </div>
+            <!-- Advanced options (hidden in batch mode). -->
+            <div class="form-section" id="advanced-options">
+                <h3>⚙️ Options avancées</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Date de début (optionnel)</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="sheetIndex">Index de la feuille Excel</label>
+                        <select id="sheetIndex" class="form-control">
+                            <option value="0">Feuille 1</option>
+                            <option value="1">Feuille 2</option>
+                            <option value="2" selected>Feuille 3 (défaut)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions buttons. -->
+            <div class="form-section">
+                <h3>🚀 Actions</h3>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <button type="button" class="btn btn-primary" onclick="processFiles()">
+                        ▶️ Traiter les fichiers
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="refreshFiles()">
+                        🔄 Actualiser la liste
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="clearLogs()">
+                        🗑️ Vider les logs
+                    </button>
+                </div>
+            </div>
+            <!-- Logs. -->
+            <div class="form-section">
+                <h3>📊 Logs de traitement</h3>
+                <div class="logs" id="logs">Interface prête - Parser intégré disponible\n</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentMode = 'single';
+        let availableFiles = [];
+        let isProcessing = false;
+        // Init.
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+            // Refresh files only in server mode.
+            if (location.protocol !== 'file:') {
+                // Delay to allow the interface to fully load.
+                setTimeout(refreshFiles, 100);
+            }
+        });
+
+        // Status check function.
+        function checkStatus() {
+            // Detect if we are in local file mode.
+            if (location.protocol === 'file:') {
+                logMessage('ℹ️ Interface en mode fichier local - fonctionnalités serveur indisponibles');
+                return;
+            }
+            // Server mode - check status via API.
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.config_exists) {
+                        logMessage('⚠️ Fichier ean_config.json manquant - créez-le à partir de ean_config.example.json');
+                    }
+                    logMessage('✅ Serveur connecté - parser disponible');
+                })
+                .catch(error => {
+                    console.error('Erreur de statut:', error);
+                    logMessage('⚠️ Impossible de contacter le serveur - fonctionnalités limitées');
+                });
+        }
+        // Select file from the explorer (single or batch mode).
+        function selectMode(mode) {
+            currentMode = mode;
+            // Update the active button.
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            // Show or hide sections based on the selected mode.
+            document.getElementById('single-mode').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('batch-mode').style.display = mode === 'batch' ? 'block' : 'none';
+            // Hide advanced options in batch mode.
+            document.getElementById('advanced-options').style.display = mode === 'batch' ? 'none' : 'block';
+            // Update the file explorer or batch file lists.
+            if (mode === 'batch') {
+                updateBatchFileLists();
+            } else {
+                updateFileExplorer();
+            }
+            logMessage(`Mode ${mode === 'single' ? 'fichier unique' : 'traitement par lots'} sélectionné`);
+        }
+        // Variables to avoid multiple simultaneous calls and too frequent calls.
+        let isRefreshing = false;
+        let lastRefreshTime = 0;
+        // 1 second minimum between calls.
+        const MIN_REFRESH_INTERVAL = 1000;
+        // Update the file explorer and batch file lists.
+        function refreshFiles() {
+            // Protection against multiple simultaneous calls.
+            if (isRefreshing) {
+                console.log('refreshFiles() déjà en cours, abandon de cet appel');
+                return;
+            }
+            // Protection against too frequent calls.
+            const now = Date.now();
+            if (now - lastRefreshTime < MIN_REFRESH_INTERVAL) {
+                console.log('refreshFiles() appelé trop récemment, abandon de cet appel');
+                return;
+            }
+            isRefreshing = true;
+            lastRefreshTime = now;
+            // Check if we are in local file mode.
+            if (location.protocol === 'file:') {
+                // Local file mode - simulate an empty list and inform the user.
+                availableFiles = [];
+                updateFileExplorer();
+                if (currentMode === 'batch') {
+                    updateBatchFileLists();
+                }
+                logMessage('ℹ️ Mode fichier local - fonctionnalités serveur indisponibles');
+                isRefreshing = false;
+                return;
+            }
+            // Server mode - call the API.
+            fetch('/api/files')
+                .then(response => response.json())
+                .then(data => {
+                    // Take the available Excel files from the response.
+                    const allFiles = data.excel_files || [];
+                    // Filter out temporary files (starting with $ or ~$).
+                    availableFiles = allFiles.filter(file => {
+                        const fileName = file.split('/').pop();
+                        return !fileName.startsWith('$') && !fileName.startsWith('~$');
+                    });
+                    updateFileExplorer();
+                    if (currentMode === 'batch') {
+                        updateBatchFileLists();
+                    }
+                    logMessage(`${availableFiles.length} fichiers Excel trouvés (fichiers temporaires exclus)`);
+                })
+                .catch(error => {
+                    console.error('Erreur lors du rafraîchissement:', error);
+                    availableFiles = [];
+                    updateFileExplorer();
+                    logMessage('❌ Erreur lors du rafraîchissement des fichiers - utilisez les boutons de sélection');
+                })
+                .finally(() => {
+                    // Free the lock in all cases.
+                    isRefreshing = false;
+                });
+        }
+        // Update the file explorer with available files (single mode).
+        function updateFileExplorer() {
+            const explorer = document.getElementById('sourceExplorer');
+            explorer.innerHTML = '';
+            if (availableFiles.length === 0) {
+                if (location.protocol === 'file:') {
+                    explorer.innerHTML = `<div class="file-item">📁 Mode fichier local - aucun fichier disponible</div>`;
+                } else {
+                    explorer.innerHTML = `<div class="file-item">Aucun fichier Excel trouvé dans excel_files</div>`;
+                }
+                return;
+            }
+            availableFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                
+                const fileName = typeof file === 'string' ? 
+                    (file.includes('/') ? file.split('/').pop() : file) : 
+                    file;
+                item.textContent = `📄 ${fileName}`;
+                // Add a click handler to select the file.
+                item.style.cursor = 'pointer';
+                item.onclick = () => selectFileFromExplorer(fileName, index);
+                explorer.appendChild(item);
+            });
+        }
+        // Update the batch file lists with available files.
+        function updateBatchFileLists() {
+            const inputList = document.getElementById('batchInputFiles');
+            const outputContainer = document.getElementById('batchOutputContainer');
+            inputList.innerHTML = '';
+            outputContainer.innerHTML = '';
+            if (availableFiles.length === 0) {
+                inputList.innerHTML = '<div class="batch-file-item">Aucun fichier Excel trouvé</div>';
+                outputContainer.innerHTML = '<div class="batch-output-item"><div class="batch-output-label">📄</div><span>Aucun fichier de sortie</span></div>';
+                return;
+            }
+            availableFiles.forEach((file, index) => {
+                // Input file item.
+                const inputItem = document.createElement('div');
+                inputItem.className = 'batch-file-item';
+                const fileName = typeof file === 'string' ? 
+                    (file.includes('/') ? file.split('/').pop() : file) : 
+                    file;
+                inputItem.textContent = `📄 ${fileName}`;
+                inputList.appendChild(inputItem);
+                // Output file item.
+                const outputItem = document.createElement('div');
+                outputItem.className = 'batch-output-item';
+                const label = document.createElement('div');
+                label.className = 'batch-output-label';
+                label.textContent = '📄';
+                const controlsContainer = document.createElement('div');
+                controlsContainer.className = 'batch-controls';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'batch-output-input';
+                input.dataset.sourceFile = fileName;
+                const baseName = fileName.replace(/\.(xlsx?|xls)$/i, '');
+                input.value = `${baseName}.csv`;
+                input.placeholder = 'nom-fichier.csv';
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.className = 'batch-date-input';
+                dateInput.dataset.sourceFile = fileName;
+                dateInput.placeholder = 'Date début';
+                dateInput.title = 'Date de début pour ce fichier (optionnel)';
+                const sheetSelect = document.createElement('select');
+                sheetSelect.className = 'batch-sheet-select';
+                sheetSelect.dataset.sourceFile = fileName;
+                sheetSelect.title = 'Index de la feuille Excel pour ce fichier';
+                // Options for sheet selection.
+                const sheetOptions = [
+                    { value: '0', text: 'Feuille 1' },
+                    { value: '1', text: 'Feuille 2' },
+                    { value: '2', text: 'Feuille 3' }
+                ];
+                sheetOptions.forEach(option => {
+                    const optElement = document.createElement('option');
+                    optElement.value = option.value;
+                    optElement.textContent = option.text;
+                    // Default selection to 'Feuille 3' (index 2).
+                    if (option.value === '2') optElement.selected = true;
+                    sheetSelect.appendChild(optElement);
+                });
+                controlsContainer.appendChild(input);
+                controlsContainer.appendChild(dateInput);
+                controlsContainer.appendChild(sheetSelect);
+                outputItem.appendChild(label);
+                outputItem.appendChild(controlsContainer);
+                outputContainer.appendChild(outputItem);
+            });
+        }
+        // Variable for the selected file in single mode.
+        let selectedFile = '';
+        // File explorer selection handler.
+        function selectFileFromExplorer(fileName, index) {
+            // Remove previous selection.
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            // Mark the file as selected.
+            document.querySelectorAll('.file-item')[index].classList.add('selected');
+            selectedFile = fileName;
+            // Generate automatically the destination file name.
+            autoGenerateDestFile(fileName);
+            logMessage(`📄 Fichier sélectionné: ${fileName}`);
+        }
+        // Generate the destination file name based on the selected file.
+        function autoGenerateDestFile(fileName) {
+            if (!fileName) return;
+            // Extract the base name without the extension.
+            const baseName = fileName.replace(/\.(xlsx?|xls)$/i, '');
+            const outputFileName = `${baseName}.csv`;
+            // Update the destination file input.
+            const destFileElement = document.getElementById('destFile');
+            if (destFileElement) {
+                destFileElement.value = outputFileName;
+            }
+            logMessage(`🔄 Nom de sortie généré: ${outputFileName}`);
+        }
+        // Process files based on the selected mode.
+        function processFiles() {
+            if (isProcessing) {
+                logMessage('⚠️ Traitement en cours...');
+                return;
+            }
+            const data = {
+                mode: currentMode,
+                config: 'ean_config.json'
+            };
+            if (currentMode === 'single') {
+                const destination = document.getElementById('destFile').value;
+                if (!selectedFile) {
+                    logMessage('❌ Veuillez sélectionner un fichier Excel');
+                    return;
+                }
+                if (!destination) {
+                    logMessage('❌ Veuillez spécifier un nom de fichier de sortie');
+                    return;
+                }
+                data.source = selectedFile;
+                data.destination = destination;
+                logMessage(`📄 Fichier source: ${selectedFile}`);
+                logMessage(`📄 Fichier destination: ${destination}`);
+            } else {
+                // Batch mode - collect source files, custom output names, start dates, and sheet indexes.
+                const batchOutputFiles = {};
+                const batchStartDates = {};
+                const batchSheetIndexes = {};
+                const outputInputs = document.querySelectorAll('.batch-output-input');
+                const dateInputs = document.querySelectorAll('.batch-date-input');
+                const sheetSelects = document.querySelectorAll('.batch-sheet-select');
+                outputInputs.forEach(input => {
+                    const sourceFile = input.dataset.sourceFile;
+                    const customName = input.value.trim();
+                    if (sourceFile && customName) {
+                        batchOutputFiles[sourceFile] = customName;
+                    }
+                });
+                dateInputs.forEach(input => {
+                    const sourceFile = input.dataset.sourceFile;
+                    const customDate = input.value;
+                    if (sourceFile && customDate) {
+                        batchStartDates[sourceFile] = customDate;
+                    }
+                });
+                sheetSelects.forEach(select => {
+                    const sourceFile = select.dataset.sourceFile;
+                    const sheetIndex = select.value;
+                    if (sourceFile && sheetIndex !== '2') {  // 2 est la valeur par défaut
+                        batchSheetIndexes[sourceFile] = sheetIndex;
+                    }
+                });
+                if (Object.keys(batchOutputFiles).length > 0) {
+                    data.batchOutputFiles = batchOutputFiles;
+                }
+                if (Object.keys(batchStartDates).length > 0) {
+                    data.batchStartDates = batchStartDates;
+                }
+                if (Object.keys(batchSheetIndexes).length > 0) {
+                    data.batchSheetIndexes = batchSheetIndexes;
+                }
+                logMessage(`📦 Mode batch - Traitement de ${availableFiles.length} fichiers avec paramètres personnalisés`);
+            }
+            // Add advanced options if provided.
+            const startDate = document.getElementById('startDate').value;
+            const sheetIndex = document.getElementById('sheetIndex').value;
+            if (startDate) data.startDate = startDate;
+            if (sheetIndex !== '2') data.sheetIndex = sheetIndex;
+            // Start processing.
+            isProcessing = true;
+            document.querySelector('.container').classList.add('processing');
+            logMessage('🚀 Début du traitement...');
+            fetch('/api/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    logMessage(`✅ ${result.message}`);
+                    if (result.details) {
+                        logMessage(`📊 ${result.details}`);
+                    }
+                    // Update the file explorer or batch file lists after processing.
+                    refreshFiles();
+                } else {
+                    logMessage(`❌ ${result.error}`);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur de traitement:', error);
+                logMessage(`❌ Erreur de traitement: ${error.message}`);
+            })
+            .finally(() => {
+                isProcessing = false;
+                document.querySelector('.container').classList.remove('processing');
+                logMessage('🏁 Traitement terminé');
+            });
+        }
+        // Utility function to log messages in the logs section.
+        function logMessage(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.textContent += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+        function clearLogs() {
+            document.getElementById('logs').textContent = 'Logs vidés\n';
+        }
+    </script>
+</body>
+</html>

@@ -1,64 +1,210 @@
-# Renewgy Excel to CSV file
+# Renewgy Excel to CSV Parser
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
+![Docker](https://img.shields.io/badge/docker-supported-blue.svg)
+![macOS](https://img.shields.io/badge/macOS-compatible-000000?logo=apple&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-compatible-FCC624?logo=linux&logoColor=black)
+![Windows](https://img.shields.io/badge/Windows-compatible-0078D6?logo=windows&logoColor=white)
 
-Un parser robuste pour convertir les fichiers Excel de Renewgy en format CSV standardisé avec validation des données, gestion d'erreurs et capacités de logging avancées.
+Un parser robuste et moderne pour convertir les fichiers Excel de Renewgy en format CSV standardisé. Solution enterprise conçue pour l'efficacité, la simplicité d'utilisation et l'intégration transparente dans des workflows de traitement de données.
 
-## 🚀 Fonctionnalités
+## ✨ Caractéristiques principales
+
+- **Workflow universel simplifié** : Dossiers d'entrée et de sortie fixes (`excel_files/` → `csv_files/`)
+- **Compatibilité multiplateforme** : Fonctionne sur macOS, Linux et Windows
+- **Launchers intelligents** : Automatisation complète de l'installation et du déploiement
+- **Interface web moderne** : Design ergonomique sans complexité technique  
+- **Traitement par lots intelligent** : Personnalisation individuelle par fichier (nom, date, feuille)
+- **Double mode d'utilisation** : Interface web conviviale ou CLI pour l'automatisation
+- **Configuration zéro** : Workflow entièrement automatisé
+- **Robustesse enterprise** : Validation rigoureuse, gestion d'erreurs et logging professionnel
+- **Prêt pour la production** : Support Docker avec launcher automatique
+
+## 🔧 Fonctionnalités détaillées
 
 - **Conversion Excel vers CSV** : Traitement automatique des fichiers Excel Renewgy
 - **Validation des données** : Vérification de la structure et de l'intégrité des données
-- **Filtrage par date** : Traitement des données à partir d'une date spécifique
-- **Traitement par lots** : Traitement de plusieurs fichiers simultanément
-- **Mapping EAN configurable** : Support des fichiers de configuration externes
-- **Logging avancé** : Niveaux de logging configurables (verbose, normal, quiet)
-- **Gestion d'erreurs robuste** : Traitement des erreurs avec rapports détaillés
-- **Support Docker** : Déploiement containerisé disponible
+- **Filtrage par date personnalisable** : Traitement des données à partir d'une date spécifique
+- **Sélection de feuille** : Configuration de l'index de feuille Excel à traiter
+- **Mapping EAN configurable** : Support des fichiers de configuration externes sécurisés
+- **Logging multi-niveaux** : Verbose, normal, quiet selon vos besoins
+- **Personnalisation avancée** : Options par fichier en mode batch
+- **Interface responsive** : Fonctionne sur desktop, tablette et mobile
 
 ## 📋 Prérequis
 
-- Python 3.10 ou plus récent
-- pandas
-- openpyxl (pour la lecture des fichiers Excel)
-- **Fichier de configuration EAN obligatoire** (voir Configuration)
+- **Python 3.10+** (recommandé : 3.11 ou plus récent)
+- **Dépendances Python** : `pandas`, `openpyxl`, `flask` (installées automatiquement)
+- **Fichier de configuration EAN** obligatoire (voir [Configuration](#️-configuration))
 
-## 🔧 Installation
+### Dépendances Python
 
-### Installation locale
-
-1. Clonez le repository :
-
-```bash
-git clone https://github.com/votre-username/renewgy-parser.git
-cd renewgy-parser
+```txt
+pandas>=1.5.0
+openpyxl>=3.0.0
+flask>=2.0.0
 ```
 
-2. Installez les dépendances :
+## 🚀 Installation Ultra-Simplifiée
+
+### Launchers Automatiques (Recommandé)
+
+Les launchers gèrent automatiquement l'installation complète et le lancement sur **macOS**, **Linux** et **Windows** :
+
+1. **Clonez le projet** :
+
+    ```bash
+    git clone https://github.com/BricePetit/RenewgyParser.git
+    cd RenewgyParser
+    ```
+
+2. **Créez votre fichier de configuration EAN** (voir [Configuration](#️-configuration))
+
+3. **Lancez directement selon votre plateforme** :
+
+**macOS / Linux :**
+
+```bash
+# Interface web avec Docker (recommandé).
+./launcher_docker.sh
+
+# Interface web locale avec environnement virtuel Python.
+./launcher_python.sh
+```
+
+**Windows :**
+
+```batch
+REM Interface web avec Docker (recommandé).
+launcher_docker.bat
+
+REM Interface web locale avec environnement virtuel Python.
+launcher_python.bat
+```
+
+Les launchers s'occupent automatiquement de :
+
+- Vérification et installation des dépendances
+- Configuration d'environnement (virtuel Python ou Docker)
+- Création des dossiers requis
+- Validation de la configuration
+- Démarrage de l'interface web
+
+### Installation Manuelle
+
+Pour un contrôle manuel ou l'intégration dans des workflows existants :
+
+#### Option A : Installation locale
 
 ```bash
 pip install -r requirements.txt
+python renewgy_parser_gui.py
 ```
 
-### Installation avec Docker
-
-1. Construisez l'image Docker :
+#### Option B : Docker manuel
 
 ```bash
+# Construction de l'image.
 docker build -t renewgy-parser .
+
+# Lancement.
+docker-compose up renewgy-web-interface
 ```
 
 ## 📖 Utilisation
 
-⚠️ **Important** : Toutes les commandes ci-dessous nécessitent l'argument `--config` avec un fichier de configuration EAN valide. Consultez la section [Configuration](#%EF%B8%8F-configuration) pour créer votre fichier de configuration.
+**Important** : Un fichier de configuration EAN est **obligatoire** pour toutes les opérations.
 
-### Utilisation locale
+### 🌐 Interface Web (Recommandé)
+
+Architecture simplifiée avec dossiers prédéfinis :
+
+- **Dossier d'entrée** : `excel_files/`
+- **Dossier de sortie** : `csv_files/`
+- **Workflow** : Déposez vos fichiers Excel → Traitez via l'interface → Récupérez les CSV
+
+#### Lancement avec Launchers
+
+**macOS / Linux :**
+
+```bash
+# Docker (recommandé) - Configuration automatique complète.
+./launcher_docker.sh
+
+# Python local - Environnement virtuel automatique.
+./launcher_python.sh
+```
+
+**Windows :**
+
+```batch
+REM Docker (recommandé) - Configuration automatique complète.
+launcher_docker.bat
+
+REM Python local - Environnement virtuel automatique.
+launcher_python.bat
+```
+
+**Interface accessible sur <http://localhost:5001>**
+
+#### Lancement Manuel
+
+**Local :**
+
+```bash
+python renewgy_parser_gui.py
+```
+
+**Docker :**
+
+```bash
+# Avec Docker Compose (Simple).
+docker-compose up renewgy-web-interface
+
+# Avec Docker directement.
+docker run -it --rm -p 5001:5000 \
+  -v "$(pwd)/excel_files:/renewgy/excel_files" \
+  -v "$(pwd)/csv_files:/renewgy/csv_files" \
+  -v "$(pwd)/ean_config.json:/renewgy/ean_config.json" \
+  renewgy-parser
+```
+
+#### Fonctionnalités de l'interface web
+
+**Mode Single (Fichier unique) :**
+
+- **Sélection de fichier** : Choix parmi les fichiers disponibles dans `excel_files/`
+- **Nom de sortie personnalisable** : Génération automatique avec possibilité d'édition
+- **Filtrage par date** : Traitement à partir d'une date spécifique
+- **Configuration de feuille** : Sélection de l'index de feuille Excel
+- **Options avancées** : Accès complet aux paramètres de configuration
+
+**Mode Batch (Traitement par lots) :**
+
+- **Traitement multiple** : Affichage et traitement de tous les fichiers Excel
+- **Personnalisation individuelle** :
+  - **Nom de sortie** : Éditable pour chaque fichier
+  - **Date de début** : Filtrage personnalisé par fichier
+  - **Index de feuille** : Configuration spécifique par fichier
+- **Traitement simultané** : Processus unifié pour tous les fichiers sélectionnés
+
+**Fonctionnalités communes :**
+
+- **Monitoring en temps réel** : Suivi détaillé du traitement
+- **Interface responsive** : Compatible desktop, tablette et mobile
+- **Feedback instantané** : Messages d'état et indicateurs de progression
+- **Gestion d'erreurs** : Rapports détaillés avec solutions suggérées
+
+### 💻 Interface en Ligne de Commande
+
+Pour l'intégration dans des scripts ou l'automatisation avancée.
 
 #### Traitement d'un fichier unique
 
 ```bash
-# Traitement basique (nécessite un fichier de configuration).
+# Traitement basique.
 python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json
 
 # Avec filtrage par date.
@@ -72,7 +218,6 @@ python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean
 
 ```bash
 # Traitement de tous les fichiers Excel dans un répertoire.
-# Note: détecte automatiquement les fichiers .xlsx et .XLSX.
 python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json
 
 # Avec filtrage par date.
@@ -95,28 +240,24 @@ python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean
 python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --sheet-index 1 --start-date 2023-01-01 --verbose
 ```
 
-### Utilisation avec Docker
-
-#### Traitement d'un fichier unique
+### Arguments disponibles
 
 ```bash
-# Monter les répertoires et exécuter le parser (config obligatoire).
-docker run --rm -v $(pwd)/excel_files:/parser/input -v $(pwd)/csv_files:/parser/output -v $(pwd):/parser/config renewgy-parser --input /parser/input/fichier.xlsx --output /parser/output/fichier.csv --config /parser/config/ean_config.json
+python src/renewgy_parser.py --help
 ```
 
-#### Traitement par lots
-
-```bash
-# Traitement de tous les fichiers Excel (config obligatoire).
-docker run --rm -v $(pwd)/excel_files:/parser/input -v $(pwd)/csv_files:/parser/output -v $(pwd):/parser/config renewgy-parser --batch-input /parser/input --batch-output /parser/output --config /parser/config/ean_config.json
-```
-
-#### Avec options avancées
-
-```bash
-# Utilisation avec filtrage par date et logging verbose.
-docker run --rm -v $(pwd)/excel_files:/parser/input -v $(pwd)/csv_files:/parser/output -v $(pwd):/parser/config renewgy-parser --batch-input /parser/input --batch-output /parser/output --config /parser/config/ean_config.json --start-date 2023-01-01 --verbose
-```
+| Argument | Description | Obligatoire |
+|----------|-------------|-------------|
+| `--input` | Fichier Excel d'entrée | Oui (mode fichier unique) |
+| `--output` | Fichier CSV de sortie | Oui (mode fichier unique) |
+| `--batch-input` | Dossier d'entrée pour le traitement par lots | Oui (mode batch) |
+| `--batch-output` | Dossier de sortie pour le traitement par lots | Oui (mode batch) |
+| `--config` | Fichier de configuration EAN | **Toujours obligatoire** |
+| `--sheet-index` | Index de la feuille Excel (défaut: 2) | Non |
+| `--pattern` | Pattern de fichiers pour le mode batch | Non |
+| `--start-date` | Date de début au format YYYY-MM-DD | Non |
+| `--verbose` | Affichage détaillé | Non |
+| `--quiet` | Affichage minimal | Non |
 
 ## ⚙️ Configuration
 
@@ -124,9 +265,7 @@ docker run --rm -v $(pwd)/excel_files:/parser/input -v $(pwd)/csv_files:/parser/
 
 **Important** : Un fichier de configuration EAN est **obligatoire** pour utiliser ce parser. Aucun mapping par défaut n'est inclus pour des raisons de sécurité.
 
-🔧 **Étape obligatoire** : Avant d'utiliser le parser, vous devez créer un fichier `ean_config.json` dans le répertoire racine du projet.
-
-Créez un fichier `ean_config.json` pour définir vos mappings EAN :
+**Étape obligatoire** : Créez un fichier `ean_config.json` dans le répertoire racine :
 
 ```json
 {
@@ -143,9 +282,9 @@ Créez un fichier `ean_config.json` pour définir vos mappings EAN :
 }
 ```
 
-⚠️ **Sécurité** : Ne jamais committer ce fichier dans votre repository. Il est automatiquement ignoré par `.gitignore`.
+**Sécurité** : Ne jamais committer ce fichier dans votre repository. Il est automatiquement ignoré par `.gitignore`.
 
-💡 **Aide** : Un fichier exemple `ean_config.example.json` est fourni pour vous aider à créer votre configuration.
+**Aide** : Un fichier exemple `ean_config.example.json` est fourni pour vous aider à créer votre configuration.
 
 ### Paramètres de configuration
 
@@ -177,78 +316,29 @@ Le fichier CSV généré contient les colonnes suivantes :
 | `mapping_config` | Configuration mapping (vide par défaut) |
 | `variable_id` | Identifiant variable du mapping |
 
-## 🔍 Options de ligne de commande
+## 📁 Structure du projet
 
-### Arguments principaux
-
-- `--input` : Fichier Excel d'entrée (mode fichier unique)
-- `--output` : Fichier CSV de sortie (mode fichier unique)
-- `--batch-input` : Répertoire contenant les fichiers Excel (mode batch)
-- `--batch-output` : Répertoire de sortie des fichiers CSV (mode batch)
-- `--config` : **OBLIGATOIRE** - Chemin vers le fichier de configuration JSON
-
-### Options de configuration
-
-- `--sheet-index` : Index de la feuille Excel à traiter (défaut: 2)
-- `--pattern` : Pattern de fichiers pour le mode batch (défaut: *.xlsx - détecte automatiquement .xlsx et .XLSX)
-- `--start-date` : Date de début pour le filtrage (format: YYYY-MM-DD)
-
-### Options de logging
-
-- `--verbose` : Active le logging détaillé
-- `--quiet` : Supprime tous les messages sauf les erreurs
-
-## 🐳 Docker
-
-### Dockerfile
-
-Le projet inclut un Dockerfile pour faciliter le déploiement :
-
-```dockerfile
-FROM python:3.13-slim
-
-WORKDIR /parser
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY src/ ./src/
-COPY ean_config.json .
-
-ENTRYPOINT ["python", "src/renewgy_parser.py"]
-```
-
-### Docker Compose (optionnel)
-
-Pour une utilisation plus complexe, vous pouvez créer un `docker-compose.yml` :
-
-```yaml
-version: '3.8'
-
-services:
-  renewgy-parser:
-    build: .
-    volumes:
-      - ./excel_files:/parser/input
-      - ./csv_files:/parser/output
-      - ./config:/parser/config
-    command: --batch-input /parser/input --batch-output /parser/output --config /parser/config/ean_config.json
-```
-
-## 🔧 Structure du projet
-
-```
-renewgy-parser/
+```txt
+RenewgyParser/
 ├── src/
-│   └── renewgy_parser.py          # Parser principal
-├── excel_files/                   # Fichiers Excel d'entrée
-├── csv_files/                     # Fichiers CSV de sortie
-├── Dockerfile                     # Configuration Docker
+│   ├── renewgy_parser.py          # Parser CLI principal
+│   └── test_renewgy_parser.py     # Tests unitaires
+├── renewgy_parser_gui.py          # Interface web Flask
+├── templates/
+│   └── index.html                 # Template web interface
 ├── requirements.txt               # Dépendances Python
-├── ean_config.example.json        # Exemple de configuration EAN
+├── Dockerfile                     # Configuration Docker
+├── docker-compose.yml             # Services Docker
+├── launcher_docker.sh             # Launcher Docker (macOS/Linux)
+├── launcher_docker.bat            # Launcher Docker (Windows)
+├── launcher_python.sh             # Launcher Python (macOS/Linux)
+├── launcher_python.bat            # Launcher Python (Windows)
 ├── ean_config.json                # Configuration EAN (à créer)
+├── ean_config.example.json        # Exemple de configuration EAN
+├── excel_files/                   # Dossier d'entrée (fixe)
+├── csv_files/                     # Dossier de sortie (fixe)
 ├── .gitignore                     # Fichiers à ignorer par Git
-└── README.md                      # Ce fichier
+└── README.md                      # Cette documentation
 ```
 
 ## 📝 Exemples d'utilisation
@@ -268,16 +358,80 @@ python src/renewgy_parser.py --input data.xlsx --output output.csv --config ean_
 ### Exemple 3 : Traitement par lots avec configuration
 
 ```bash
-python src/renewgy_parser.py --batch-input ./input_files --batch-output ./output_files --config ./my_ean_config.json --start-date 2023-06-01 --verbose
+python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ./ean_config.json --start-date 2023-06-01 --verbose
 ```
 
 ### Exemple 4 : Utilisation Docker complète
 
 ```bash
-docker run --rm -v $(pwd)/data:/parser/data -v $(pwd):/parser/config renewgy-parser --batch-input /parser/data/input --batch-output /parser/data/output --config /parser/config/ean_config.json --start-date 2023-01-01
+docker run --rm -v $(pwd)/excel_files:/parser/excel_files -v $(pwd)/csv_files:/parser/csv_files -v $(pwd):/parser/config renewgy-parser --batch-input /parser/excel_files --batch-output /parser/csv_files --config /parser/config/ean_config.json --start-date 2023-01-01
 ```
 
-## 🚨 Gestion des erreurs
+## 🔧 Dépannage
+
+### Problèmes courants
+
+1. **Erreur "Config file not found"**
+   - Vérifiez que `ean_config.json` existe et est accessible
+   - Utilisez un chemin absolu si nécessaire
+
+2. **Erreur "No valid Excel files found"**
+   - Vérifiez que vos fichiers ont l'extension `.xlsx` ou `.XLSX`
+   - Placez vos fichiers dans le dossier `excel_files/`
+   - Utilisez `--pattern` pour spécifier un pattern personnalisé
+
+3. **Erreur "EAN not found in config"**
+   - Ajoutez le mapping EAN manquant dans votre fichier de configuration
+   - Vérifiez l'orthographe exacte de l'EAN
+
+4. **Interface web ne démarre pas**
+   - Vérifiez que le port 5001 n'est pas utilisé
+   - Utilisez les launchers automatiques selon votre plateforme :
+     - **macOS/Linux** : `./launcher_python.sh` ou `./launcher_docker.sh`
+     - **Windows** : `launcher_python.bat` ou `launcher_docker.bat`
+
+5. **Erreur "Port already in use" avec Docker**
+   - Le port 5001 est configuré par défaut (au lieu de 5000 pour éviter les conflits avec AirPlay sur macOS)
+   - Si le port 5001 est occupé, modifiez le port dans `docker-compose.yml`
+   - Puis accédez à <http://localhost:5002>
+
+6. **Problème d'environnement virtuel**
+   - Le launcher Python gère automatiquement l'environnement virtuel
+   - En cas de problème, supprimez le dossier `renewgy_parser_venv/` et relancez :
+     - **macOS/Linux** : `./launcher_python.sh`
+     - **Windows** : `launcher_python.bat`
+
+### Logs et débogage
+
+**macOS / Linux :**
+
+```bash
+# Affichage détaillé avec les launchers.
+./launcher_python.sh   # Les logs sont automatiquement affichés.
+./launcher_docker.sh   # Les logs Docker sont affichés.
+
+# Affichage détaillé en mode CLI.
+python src/renewgy_parser.py --verbose --input file.xlsx --output file.csv --config ean_config.json
+
+# Logs Docker manuels.
+docker-compose logs renewgy-web-interface
+```
+
+**Windows :**
+
+```batch
+REM Affichage détaillé avec les launchers.
+launcher_python.bat   REM Les logs sont automatiquement affichés.
+launcher_docker.bat   REM Les logs Docker sont affichés.
+
+REM Affichage détaillé en mode CLI.
+python src/renewgy_parser.py --verbose --input file.xlsx --output file.csv --config ean_config.json
+
+REM Logs Docker manuels.
+docker-compose logs renewgy-web-interface
+```
+
+## ⚠️ Gestion des erreurs
 
 Le parser gère plusieurs types d'erreurs :
 
@@ -298,13 +452,13 @@ Le parser utilise un système de logging configurable :
 
 Format des logs :
 
-```
-2025-07-03 10:30:45 - renewgy_parser - INFO - Processing file: data.xlsx
-2025-07-03 10:30:46 - renewgy_parser - INFO - Extracted EAN: 541448965000143475
-2025-07-03 10:30:47 - renewgy_parser - INFO - Extracted 1000 data points
+```txt
+2025-07-08 10:30:45 - renewgy_parser - INFO - Processing file: data.xlsx
+2025-07-08 10:30:46 - renewgy_parser - INFO - Extracted EAN: 541448965000143475
+2025-07-08 10:30:47 - renewgy_parser - INFO - Extracted 1000 data points
 ```
 
-## 🔄 Filtrage par date
+## 📅 Filtrage par date
 
 Une fonctionnalité clé du parser est la possibilité de filtrer les données par date de début :
 
@@ -321,15 +475,17 @@ Cette fonctionnalité est particulièrement utile pour :
 
 ## 🤝 Contribution
 
-1. Forkez le projet
-2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. Commitez vos changements (`git commit -am 'Ajout d'une nouvelle fonctionnalité'`)
-4. Poussez vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
-5. Créez une Pull Request
+Les contributions sont les bienvenues ! Voici comment contribuer :
+
+1. Fork le projet
+2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/AmazingFeature`)
+3. Commitez vos changements (`git commit -m 'Add some AmazingFeature'`)
+4. Poussez vers la branche (`git push origin feature/AmazingFeature`)
+5. Ouvrez une Pull Request
 
 ## 📄 Licence
 
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 
 ## 🔒 Sécurité
 
@@ -346,21 +502,20 @@ excel_files/
 csv_files/
 *.xlsx
 *.csv
+
+# Environnement virtuel Python
+renewgy_parser_venv/
 ```
 
 ## 📞 Support
 
 Pour toute question ou problème :
 
-1. Consultez la documentation
-2. Vérifiez les issues existantes
-3. Créez une nouvelle issue avec :
-   - Description détaillée du problème
-   - Étapes pour reproduire
-   - Logs d'erreur
-   - Environnement (Python, OS, etc.)
+1. Consultez cette documentation
+2. Vérifiez les [problèmes courants](#problèmes-courants)
+3. Ouvrez une issue sur [GitHub](https://github.com/BricePetit/RenewgyParser/issues)
 
-## 🔄 Changelog
+## 📈 Changelog
 
 ### v1.0.0
 
@@ -370,13 +525,18 @@ Pour toute question ou problème :
 - Traitement par lots
 - Configuration EAN externe
 - Support Docker
+- Interface web moderne
+- Workflow universel simplifié
+- Launchers automatiques Python et Docker
 
 ---
 
-**Note** : Ce parser a été développé spécifiquement pour les fichiers Excel Renewgy. Assurez-vous que vos fichiers respectent le format attendu avant traitement.
+## Auteur
 
-## 👨‍💻 Développeur
-
-**Brice Petit** - *Développeur principal* - [GitHub](https://github.com/BricePetit)
+**Brice Petit**  
+Université Libre de Bruxelles (ULB)
 
 Ce projet a été développé dans le cadre d'un projet de recherche PhD à l'Université Libre de Bruxelles (ULB).
+
+- GitHub: [BricePetit](https://github.com/BricePetit)
+- Projet: [RenewgyParser](https://github.com/BricePetit/RenewgyParser)
