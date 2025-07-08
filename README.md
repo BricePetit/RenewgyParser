@@ -320,23 +320,26 @@ Le fichier CSV généré contient les colonnes suivantes :
 
 ```txt
 RenewgyParser/
-├── renewgy_parser.py              # Parser CLI principal
-├── renewgy_parser_gui.py          # Interface web Flask
+├── csv_files/                     # Dossier de sortie (fixe).
+│   └── .gitignore                 # Fichiers à ignorer par Git.
+├── excel_files/                   # Dossier d'entrée (fixe).
+│   └── .gitignore                 # Fichiers à ignorer par Git.
 ├── templates/
-│   └── index.html                 # Template web interface
-├── requirements.txt               # Dépendances Python
-├── Dockerfile                     # Configuration Docker
-├── docker-compose.yml             # Services Docker
-├── launcher_docker.sh             # Launcher Docker (macOS/Linux)
-├── launcher_docker.bat            # Launcher Docker (Windows)
-├── launcher_python.sh             # Launcher Python (macOS/Linux)
-├── launcher_python.bat            # Launcher Python (Windows)
-├── ean_config.json                # Configuration EAN (à créer)
-├── ean_config.example.json        # Exemple de configuration EAN
-├── excel_files/                   # Dossier d'entrée (fixe)
-├── csv_files/                     # Dossier de sortie (fixe)
-├── .gitignore                     # Fichiers à ignorer par Git
-└── README.md                      # Cette documentation
+│   └── index.html                 # Template web interface.
+├── .gitignore                     # Fichiers à ignorer par Git.
+├── docker-compose.yml             # Services Docker.
+├── Dockerfile                     # Configuration Docker.
+├── ean_config.example.json        # Exemple de configuration EAN.
+├── ean_config.json                # Configuration EAN (à créer).
+├── launcher_docker.bat            # Launcher Docker (Windows).
+├── launcher_docker.sh             # Launcher Docker (macOS/Linux).
+├── launcher_python.bat            # Launcher Python (Windows).
+├── launcher_python.sh             # Launcher Python (macOS/Linux).
+├── LICENSE                        # Licence du projet.
+├── README.md                      # Cette documentation.
+├── renewgy_parser.py              # Parser CLI principal.
+├── renewgy_parser_gui.py          # Interface web Flask.
+└── requirements.txt               # Dépendances Python.
 ```
 
 ## 📝 Exemples d'utilisation
