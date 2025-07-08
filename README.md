@@ -320,9 +320,7 @@ Le fichier CSV généré contient les colonnes suivantes :
 
 ```txt
 RenewgyParser/
-├── src/
-│   ├── renewgy_parser.py          # Parser CLI principal
-│   └── test_renewgy_parser.py     # Tests unitaires
+├── renewgy_parser.py              # Parser CLI principal
 ├── renewgy_parser_gui.py          # Interface web Flask
 ├── templates/
 │   └── index.html                 # Template web interface
