@@ -22,24 +22,48 @@ echo.
 
 REM Function to check Python installation.
 echo 🔍 Vérification de Python...
+
+REM Try 'py' launcher first (recommended on Windows).
+py --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f "tokens=2" %%i in ('py --version 2^>^&1') do set PYTHON_VERSION=%%i
+    echo ✅ Python !PYTHON_VERSION! trouvé via 'py' launcher
+    set PYTHON_CMD=py
+    goto python_found
+)
+
+REM Try 'python' command.
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
-    for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-    echo ✅ !PYTHON_VERSION! trouvé
+    for /f "tokens=2" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
+    echo ✅ Python !PYTHON_VERSION! trouvé via 'python' command
     set PYTHON_CMD=python
-) else (
-    py --version >nul 2>&1
-    if %errorlevel% equ 0 (
-        for /f "tokens=*" %%i in ('py --version 2^>^&1') do set PYTHON_VERSION=%%i
-        echo ✅ !PYTHON_VERSION! trouvé ^(via py launcher^)
-        set PYTHON_CMD=py
-    ) else (
-        echo ❌ Python n'est pas installé ou pas dans le PATH
-        echo    Veuillez installer Python 3.10+ depuis https://python.org
-        pause
-        exit /b 1
-    )
+    goto python_found
 )
+
+REM Try 'python3' command.
+python3 --version >nul 2>&1
+if %errorlevel% equ 0 (
+    for /f "tokens=2" %%i in ('python3 --version 2^>^&1') do set PYTHON_VERSION=%%i
+    echo ✅ Python !PYTHON_VERSION! trouvé via 'python3' command
+    set PYTHON_CMD=python3
+    goto python_found
+)
+
+REM No Python found.
+echo ❌ Python n'est pas installé ou pas accessible
+echo.
+echo 💡 Solutions possibles:
+echo    1. Installez Python 3.10+ depuis https://python.org
+echo    2. Assurez-vous que Python est dans le PATH système
+echo    3. Redémarrez votre terminal après installation
+echo.
+pause
+exit /b 1
+
+:python_found
+echo 🎯 Utilisation de: %PYTHON_CMD% (version %PYTHON_VERSION%)
+echo.
 
 REM Function to check if the port is available.
 echo 🔍 Vérification du port %PORT%...
@@ -60,48 +84,61 @@ if %errorlevel% equ 0 (
 )
 
 REM Function to set up the virtual environment.
+echo.
 echo 🏗️  Configuration de l'environnement virtuel...
 
 if exist "%VENV_PATH%" (
     echo 📁 Environnement virtuel existant trouvé: %VENV_PATH%
-
+    echo.
+    set /p recreate_response="❓ Voulez-vous recréer l'environnement virtuel ? (y/N): "
+    if /i "!recreate_response!"=="y" (
+        echo 🗑️  Suppression de l'ancien environnement virtuel...
+        rmdir /s /q "%VENV_PATH%" 2>nul
+        if %errorlevel% neq 0 (
+            echo ⚠️  Impossible de supprimer complètement l'ancien environnement
+            echo    Certains fichiers peuvent être en cours d'utilisation
+        )
+        goto create_venv
+    )
+    
     REM Test if the virtual environment is working.
-    echo 🧪 Test de l'environnement virtuel...
+    echo 🧪 Test de l'environnement virtuel existant...
     call "%VENV_PATH%\Scripts\activate.bat" 2>nul
     if %errorlevel% neq 0 (
-        echo ❌ L'environnement virtuel est corrompu, recréation...
+        echo ❌ L'environnement virtuel est corrompu, recréation automatique...
         rmdir /s /q "%VENV_PATH%" 2>nul
         goto create_venv
     )
-
+    
     REM Test if the required packages are installed.
-    python -c "import flask, pandas, openpyxl" 2>nul
+    echo 🔍 Vérification des dépendances...
+    %PYTHON_CMD% -c "import flask, pandas, openpyxl" 2>nul
     if %errorlevel% neq 0 (
         echo ⚠️  Dépendances manquantes, réinstallation...
-        %PIP_CMD% install -r requirements.txt
+        %PYTHON_CMD% -m pip install -r requirements.txt --quiet
         if %errorlevel% neq 0 (
             echo ❌ Erreur lors de l'installation des dépendances
+            echo    Essayez de recréer l'environnement virtuel
             pause
             exit /b 1
         )
+        echo ✅ Dépendances réinstallées
     ) else (
         echo ✅ Environnement virtuel opérationnel
-        goto setup_dirs
     )
+    goto setup_dirs
 )
 
 :create_venv
-if not exist "%VENV_PATH%" (
-    echo 🔨 Création de l'environnement virtuel: %VENV_NAME%
-    %PYTHON_CMD% -m venv "%VENV_PATH%"
-    if %errorlevel% neq 0 (
-        echo ❌ Erreur lors de la création de l'environnement virtuel
-        echo    Assurez-vous que Python est correctement installé
-        pause
-        exit /b 1
-    )
-    echo ✅ Environnement virtuel créé
+echo 🔨 Création de l'environnement virtuel: %VENV_NAME%
+%PYTHON_CMD% -m venv "%VENV_PATH%"
+if %errorlevel% neq 0 (
+    echo ❌ Erreur lors de la création de l'environnement virtuel
+    echo    Assurez-vous que Python est correctement installé
+    pause
+    exit /b 1
 )
+echo ✅ Environnement virtuel créé
 
 REM Activate the virtual environment.
 echo 🔓 Activation de l'environnement virtuel...
@@ -114,11 +151,17 @@ if %errorlevel% neq 0 (
 
 REM Update pip to the latest version.
 echo 📦 Mise à jour de pip...
-python -m pip install --upgrade pip --quiet
+%PYTHON_CMD% -m pip install --upgrade pip --quiet
 
 REM Install the required packages.
 echo 📦 Installation des dépendances...
-%PIP_CMD% install -r requirements.txt
+if not exist "requirements.txt" (
+    echo ❌ Fichier requirements.txt introuvable
+    pause
+    exit /b 1
+)
+
+%PYTHON_CMD% -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo ❌ Erreur lors de l'installation des dépendances
     echo    Vérifiez votre fichier requirements.txt
@@ -190,7 +233,7 @@ set FLASK_PORT=%PORT%
 set FLASK_HOST=127.0.0.1
 
 REM Launch the Flask application.
-python renewgy_parser_gui.py
+%PYTHON_CMD% renewgy_parser_gui.py
 if %errorlevel% neq 0 (
     echo.
     echo ❌ Erreur lors du lancement de l'interface web
