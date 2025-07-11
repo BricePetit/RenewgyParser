@@ -295,16 +295,24 @@
                 <div id="single-mode">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="sourceFile">� Fichiers sources Excel disponibles</label>
+                            <label for="sourceFile">📂 Fichiers sources Excel disponibles</label>
                             <div class="file-explorer" id="sourceExplorer" style="margin-top: 10px;"></div>
                             <small style="color: #666; font-size: 12px;">Fichiers Excel dans le dossier excel_files (affichage uniquement)</small>
                         </div>
                         <div class="form-group">
-                            <label for="destFile">� Nom du fichier CSV de sortie</label>
+                            <label for="destFile">📁 Nom du fichier CSV de sortie</label>
                             <div class="file-selector">
                                 <input type="text" id="destFile" class="form-control" placeholder="output.csv" style="margin-bottom: 8px;">
                             </div>
                             <small style="color: #666; font-size: 12px;">Le nom du fichier CSV est généré automatiquement à partir du fichier Excel sélectionné (modifiable)</small>
+                        </div>
+                    </div>
+                    <!-- Sheet information section -->
+                    <div id="sheetInfoSection" style="display: none; margin-top: 20px;">
+                        <div class="form-section">
+                            <h4>📊 Informations sur les feuilles Excel</h4>
+                            <div id="sheetInfoContainer" style="margin-top: 10px;"></div>
+                            <small style="color: #666; font-size: 12px;">Vérifiez quelle feuille contient les bonnes données avant de traiter</small>
                         </div>
                     </div>
                 </div>
@@ -314,6 +322,15 @@
                         <label>📄 Fichiers Excel à traiter</label>
                         <div class="batch-files-list" id="batchInputFiles" style="margin-top: 10px;"></div>
                         <small style="color: #666; font-size: 12px;">Tous les fichiers Excel du dossier excel_files seront traités</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="batchConsumptionType">Type de consommation pour tous les fichiers</label>
+                        <select id="batchConsumptionType" class="form-control">
+                            <option value="MEASURED ACTIVE CONSUMPTION" selected>Consommation Active</option>
+                            <option value="MEASURED INDUCTIVE CONSUMPTION">Consommation Inductive</option>
+                            <option value="MEASURED CAPACITIVE CONSUMPTION">Consommation Capacitive</option>
+                        </select>
+                        <small style="color: #666; font-size: 12px;">Ce type sera appliqué à tous les fichiers du traitement par lots</small>
                     </div>
                     <div class="form-group">
                         <label>📄 Fichiers CSV de sortie, dates et feuilles (modifiables)</label>
@@ -333,11 +350,20 @@
                     <div class="form-group">
                         <label for="sheetIndex">Index de la feuille Excel</label>
                         <select id="sheetIndex" class="form-control">
-                            <option value="0">Feuille 1</option>
+                            <option value="0" selected>Feuille 1 (défaut)</option>
                             <option value="1">Feuille 2</option>
-                            <option value="2" selected>Feuille 3 (défaut)</option>
+                            <option value="2">Feuille 3</option>
                         </select>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="consumptionType">Type de consommation</label>
+                    <select id="consumptionType" class="form-control">
+                        <option value="MEASURED ACTIVE CONSUMPTION" selected>Consommation Active</option>
+                        <option value="MEASURED INDUCTIVE CONSUMPTION">Consommation Inductive</option>
+                        <option value="MEASURED CAPACITIVE CONSUMPTION">Consommation Capacitive</option>
+                    </select>
+                    <small style="color: #666; font-size: 12px;">Choisissez le type de données à extraire du fichier Excel</small>
                 </div>
             </div>
 
@@ -375,8 +401,25 @@
                 // Delay to allow the interface to fully load.
                 setTimeout(refreshFiles, 100);
             }
+            // Add event listener for consumption type change in single mode
+            const consumptionTypeSelect = document.getElementById('consumptionType');
+            if (consumptionTypeSelect) {
+                consumptionTypeSelect.addEventListener('change', function() {
+                    if (currentMode === 'single' && selectedFile) {
+                        autoGenerateDestFile(selectedFile, true); // Force update
+                    }
+                });
+            }
+            // Add event listener for batch consumption type change
+            const batchConsumptionTypeSelect = document.getElementById('batchConsumptionType');
+            if (batchConsumptionTypeSelect) {
+                batchConsumptionTypeSelect.addEventListener('change', function() {
+                    if (currentMode === 'batch') {
+                        updateBatchFileLists(); // Regenerate all batch output names
+                    }
+                });
+            }
         });
-
         // Status check function.
         function checkStatus() {
             // Detect if we are in local file mode.
@@ -538,7 +581,9 @@
                 input.className = 'batch-output-input';
                 input.dataset.sourceFile = fileName;
                 const baseName = fileName.replace(/\.(xlsx?|xls)$/i, '');
-                input.value = `${baseName}.csv`;
+                const batchConsumptionType = document.getElementById('batchConsumptionType').value;
+                const suffix = getConsumptionTypeSuffix(batchConsumptionType);
+                input.value = `${baseName}${suffix}.csv`;
                 input.placeholder = 'nom-fichier.csv';
                 const dateInput = document.createElement('input');
                 dateInput.type = 'date';
@@ -560,8 +605,8 @@
                     const optElement = document.createElement('option');
                     optElement.value = option.value;
                     optElement.textContent = option.text;
-                    // Default selection to 'Feuille 3' (index 2).
-                    if (option.value === '2') optElement.selected = true;
+                    // Default selection to 'Feuille 1' (index 0).
+                    if (option.value === '0') optElement.selected = true;
                     sheetSelect.appendChild(optElement);
                 });
                 controlsContainer.appendChild(input);
@@ -576,29 +621,51 @@
         let selectedFile = '';
         // File explorer selection handler.
         function selectFileFromExplorer(fileName, index) {
-            // Remove previous selection.
+            // Remove selection from all items.
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('selected');
             });
-            // Mark the file as selected.
-            document.querySelectorAll('.file-item')[index].classList.add('selected');
+            // Add selection to the clicked item.
+            const clickedItem = document.querySelectorAll('.file-item')[index];
+            if (clickedItem) {
+                clickedItem.classList.add('selected');
+            }
+            // Update the selected file variable.
             selectedFile = fileName;
-            // Generate automatically the destination file name.
-            autoGenerateDestFile(fileName);
+            // Auto-generate destination filename with consumption type suffix.
+            autoGenerateDestFile(fileName, true); // Force update
             logMessage(`📄 Fichier sélectionné: ${fileName}`);
         }
-        // Generate the destination file name based on the selected file.
-        function autoGenerateDestFile(fileName) {
-            if (!fileName) return;
+        // Generate consumption type suffix for filename.
+        function getConsumptionTypeSuffix(consumptionType) {
+            switch (consumptionType) {
+                case 'MEASURED ACTIVE CONSUMPTION':
+                    return '_active';
+                case 'MEASURED INDUCTIVE CONSUMPTION':
+                    return '_inductive';
+                case 'MEASURED CAPACITIVE CONSUMPTION':
+                    return '_capacitive';
+                default:
+                    return '_active';
+            }
+        }
+        // Generate the destination file name based on the selected file and consumption type.
+        function autoGenerateDestFile(fileName, forceUpdate = false) {
+            if (!fileName && !selectedFile) return;
+            // Use the provided fileName or the globally selected file.
+            const fileToProcess = fileName || selectedFile;
+            // Get current consumption type.
+            const consumptionType = document.getElementById('consumptionType').value;
+            const suffix = getConsumptionTypeSuffix(consumptionType);
             // Extract the base name without the extension.
-            const baseName = fileName.replace(/\.(xlsx?|xls)$/i, '');
-            const outputFileName = `${baseName}.csv`;
+            const baseName = fileToProcess.replace(/\.(xlsx?|xls)$/i, '');
+            const outputFileName = `${baseName}${suffix}.csv`;
             // Update the destination file input.
             const destFileElement = document.getElementById('destFile');
-            if (destFileElement) {
+            if (destFileElement && (forceUpdate || !destFileElement.value || destFileElement.value === `${baseName}.csv` || destFileElement.value.includes('_active.csv') || destFileElement.value.includes('_inductive.csv') || destFileElement.value.includes('_capacitive.csv'))) {
                 destFileElement.value = outputFileName;
+                logMessage(`🔄 Nom de sortie mis à jour: ${outputFileName}`);
             }
-            logMessage(`🔄 Nom de sortie généré: ${outputFileName}`);
         }
         // Process files based on the selected mode.
         function processFiles() {
@@ -610,6 +677,9 @@
                 mode: currentMode,
                 config: 'ean_config.json'
             };
+            // Add consumption type to data
+            const consumptionType = document.getElementById('consumptionType').value;
+            data.consumptionType = consumptionType;
             if (currentMode === 'single') {
                 const destination = document.getElementById('destFile').value;
                 if (!selectedFile) {
@@ -624,8 +694,11 @@
                 data.destination = destination;
                 logMessage(`📄 Fichier source: ${selectedFile}`);
                 logMessage(`📄 Fichier destination: ${destination}`);
+                logMessage(`📊 Type de consommation: ${consumptionType}`);
             } else {
                 // Batch mode - collect source files, custom output names, start dates, and sheet indexes.
+                const batchConsumptionType = document.getElementById('batchConsumptionType').value;
+                data.consumptionType = batchConsumptionType;
                 const batchOutputFiles = {};
                 const batchStartDates = {};
                 const batchSheetIndexes = {};
@@ -649,10 +722,11 @@
                 sheetSelects.forEach(select => {
                     const sourceFile = select.dataset.sourceFile;
                     const sheetIndex = select.value;
-                    if (sourceFile && sheetIndex !== '2') {  // 2 est la valeur par défaut
+                    if (sourceFile && sheetIndex !== '0') {
                         batchSheetIndexes[sourceFile] = sheetIndex;
                     }
                 });
+                logMessage(`📊 Type de consommation pour le batch: ${batchConsumptionType}`);
                 if (Object.keys(batchOutputFiles).length > 0) {
                     data.batchOutputFiles = batchOutputFiles;
                 }
@@ -668,7 +742,7 @@
             const startDate = document.getElementById('startDate').value;
             const sheetIndex = document.getElementById('sheetIndex').value;
             if (startDate) data.startDate = startDate;
-            if (sheetIndex !== '2') data.sheetIndex = sheetIndex;
+            data.sheetIndex = sheetIndex;
             // Start processing.
             isProcessing = true;
             document.querySelector('.container').classList.add('processing');

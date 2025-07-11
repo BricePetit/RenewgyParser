@@ -8,30 +8,64 @@
 ![Linux](https://img.shields.io/badge/Linux-compatible-FCC624?logo=linux&logoColor=black)
 ![Windows](https://img.shields.io/badge/Windows-compatible-0078D6?logo=windows&logoColor=white)
 
-Un parser robuste et moderne pour convertir les fichiers Excel de Renewgy en format CSV standardisé. Solution enterprise conçue pour l'efficacité, la simplicité d'utilisation et l'intégration transparente dans des workflows de traitement de données.
+Un parser **ultra-robuste** et **intelligent** pour convertir les fichiers Excel de Renewgy en format CSV standardisé. Solution enterprise avec **détection automatique avancée**, **gestion complète des EAN bi-horaires** et **interface moderne** conçue pour l'efficacité, la simplicité d'utilisation et l'intégration transparente dans des workflows de traitement de données.
 
 ## ✨ Caractéristiques principales
 
-- **Workflow universel simplifié** : Dossiers d'entrée et de sortie fixes (`excel_files/` → `csv_files/`)
-- **Compatibilité multiplateforme** : Fonctionne sur macOS, Linux et Windows
-- **Launchers intelligents** : Automatisation complète de l'installation et du déploiement
-- **Interface web moderne** : Design ergonomique sans complexité technique  
-- **Traitement par lots intelligent** : Personnalisation individuelle par fichier (nom, date, feuille)
-- **Double mode d'utilisation** : Interface web conviviale ou CLI pour l'automatisation
-- **Configuration zéro** : Workflow entièrement automatisé
-- **Robustesse enterprise** : Validation rigoureuse, gestion d'erreurs et logging professionnel
-- **Prêt pour la production** : Support Docker avec launcher automatique
+- **🧠 Intelligence automatique** : Détection dynamique des colonnes, structure et format des fichiers Excel
+- **⚡ Gestion EAN bi-horaires** : Support automatique des tarifs peak/off-peak avec génération de fichiers séparés
+- **🎯 Sélection du type de puissance** : Choix entre consommation active, inductive ou capacitive
+- **📝 Noms de fichiers intelligents** : Génération automatique avec suffixes (`_active`, `_inductive`, `_capacitive`, `_peak`, `_offpeak`)
+- **🔄 Workflow universel simplifié** : Dossiers d'entrée et de sortie fixes (`excel_files/` → `csv_files/`)
+- **🌐 Compatibilité multiplateforme** : Fonctionne sur macOS, Linux et Windows
+- **🚀 Launchers intelligents** : Automatisation complète de l'installation et du déploiement
+- **💻 Interface web moderne** : Design ergonomique avec feedback en temps réel
+- **📦 Traitement par lots intelligent** : Personnalisation individuelle par fichier (nom, date, feuille, type de puissance)
+- **🔧 Double mode d'utilisation** : Interface web conviviale ou CLI pour l'automatisation
+- **⚙️ Configuration zéro** : Workflow entièrement automatisé avec détection intelligente
+- **🛡️ Robustesse enterprise** : Validation rigoureuse, gestion d'erreurs et logging professionnel
+- **🐳 Prêt pour la production** : Support Docker avec launcher automatique
 
 ## 🔧 Fonctionnalités détaillées
 
-- **Conversion Excel vers CSV** : Traitement automatique des fichiers Excel Renewgy
-- **Validation des données** : Vérification de la structure et de l'intégrité des données
+### 🎯 Sélection intelligente du type de puissance
+
+- **Types supportés** : Active, Inductive (réactive), Capacitive (réactive)
+- **Détection automatique** : Reconnaissance des colonnes de puissance dans les fichiers Excel
+- **Noms de fichiers automatiques** : Suffixes `_active`, `_inductive`, `_capacitive` pour éviter l'écrasement
+- **Interface utilisateur** : Sélection dynamique avec mise à jour automatique du nom de fichier
+
+### ⚡ Gestion avancée des EAN bi-horaires
+
+- **Détection automatique** : Reconnaissance des EAN avec tarification peak/off-peak
+- **Configuration flexible** : Règles horaires personnalisables via `ean_config.json`
+- **Génération de fichiers séparés** : Automatiquement `_peak.csv` et `_offpeak.csv`
+- **Règles horaires par défaut** :
+  - **Peak** : 07h00-22h00 (lundi-vendredi uniquement)
+  - **Off-peak** : 22h00-07h00 (lundi-vendredi) + tout le weekend
+
+### 🧠 Détection automatique intelligente
+
+- **Structure dynamique** : Détection automatique des en-têtes et début des données
+- **Colonnes flexibles** : Reconnaissance automatique des colonnes timestamp et valeurs
+- **Validation robuste** : Vérification de l'intégrité des données et de la structure
+- **Formats multiples** : Support de diverses structures de fichiers Excel Renewgy
+
+### 📊 Traitement et conversion
+
+- **Conversion Excel vers CSV** : Traitement automatique avec validation complète
 - **Filtrage par date personnalisable** : Traitement des données à partir d'une date spécifique
 - **Sélection de feuille** : Configuration de l'index de feuille Excel à traiter
 - **Mapping EAN configurable** : Support des fichiers de configuration externes sécurisés
 - **Logging multi-niveaux** : Verbose, normal, quiet selon vos besoins
-- **Personnalisation avancée** : Options par fichier en mode batch
+
+### 🎨 Interface utilisateur avancée
+
 - **Interface responsive** : Fonctionne sur desktop, tablette et mobile
+- **Mode single et batch** : Traitement d'un fichier ou par lots
+- **Personnalisation en temps réel** : Options par fichier avec prévisualisation
+- **Feedback instantané** : Messages d'état et indicateurs de progression
+- **Gestion d'erreurs intelligente** : Rapports détaillés avec solutions suggérées
 
 ## 📋 Prérequis
 
@@ -176,7 +210,9 @@ docker run -it --rm -p 5001:5000 \
 **Mode Single (Fichier unique) :**
 
 - **Sélection de fichier** : Choix parmi les fichiers disponibles dans `excel_files/`
-- **Nom de sortie personnalisable** : Génération automatique avec possibilité d'édition
+- **Type de puissance** : Sélection entre Active, Inductive ou Capacitive
+- **Nom de sortie intelligent** : Génération automatique avec suffixe selon le type (`_active`, `_inductive`, `_capacitive`)
+- **EAN bi-horaires** : Génération automatique de deux fichiers `_peak.csv` et `_offpeak.csv`
 - **Filtrage par date** : Traitement à partir d'une date spécifique
 - **Configuration de feuille** : Sélection de l'index de feuille Excel
 - **Options avancées** : Accès complet aux paramètres de configuration
@@ -185,9 +221,11 @@ docker run -it --rm -p 5001:5000 \
 
 - **Traitement multiple** : Affichage et traitement de tous les fichiers Excel
 - **Personnalisation individuelle** :
-  - **Nom de sortie** : Éditable pour chaque fichier
+  - **Type de puissance** : Choix par fichier avec mise à jour du nom
+  - **Nom de sortie** : Génération automatique avec suffixes intelligents
   - **Date de début** : Filtrage personnalisé par fichier
   - **Index de feuille** : Configuration spécifique par fichier
+- **Gestion EAN bi-horaires** : Traitement automatique avec fichiers séparés
 - **Traitement simultané** : Processus unifié pour tous les fichiers sélectionnés
 
 **Fonctionnalités communes :**
@@ -199,65 +237,97 @@ docker run -it --rm -p 5001:5000 \
 
 ### 💻 Interface en Ligne de Commande
 
-Pour l'intégration dans des scripts ou l'automatisation avancée.
+Pour l'intégration dans des scripts ou l'automatisation avancée. Toutes les nouvelles fonctionnalités sont disponibles via CLI.
 
 #### Traitement d'un fichier unique
 
 ```bash
-# Traitement basique.
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json
+# Traitement basique avec type de puissance active (défaut).
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json
+
+# Sélection du type de puissance (active, inductive, capacitive).
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --power-type inductive
+
+# Le nom de fichier sera automatiquement suffixé : output_inductive.csv
+# Pour les EAN bi-horaires : output_inductive_peak.csv et output_inductive_offpeak.csv
 
 # Avec filtrage par date.
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --start-date 2023-01-01
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --start-date 2023-01-01 --power-type capacitive
 
 # Avec logging verbose.
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --verbose
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --verbose --power-type active
 ```
 
 #### Traitement par lots
 
 ```bash
-# Traitement de tous les fichiers Excel dans un répertoire.
-python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json
+# Traitement de tous les fichiers Excel avec type de puissance par défaut.
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json
+
+# Avec type de puissance spécifique pour tous les fichiers.
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --power-type inductive
 
 # Avec filtrage par date.
-python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --start-date 2023-06-01
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --start-date 2023-06-01 --power-type capacitive
 
 # Avec pattern personnalisé.
-python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --pattern "*specific*"
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --pattern "*specific*" --power-type active
 ```
 
 #### Configuration et options avancées
 
 ```bash
-# Utilisation d'un fichier de configuration EAN personnalisé (obligatoire).
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config mon_config.json
+# Type de puissance avec fichier de configuration EAN personnalisé.
+python renewgy_parser.py --input input.xlsx --output output.csv --config mon_config.json --power-type inductive
 
-# Spécification de l'index de la feuille Excel.
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --sheet-index 0
+# Spécification de l'index de la feuille Excel avec type de puissance.
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --sheet-index 0 --power-type capacitive
 
-# Combinaison de plusieurs options.
-python src/renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --sheet-index 1 --start-date 2023-01-01 --verbose
+# Combinaison de plusieurs options avec nouvelles fonctionnalités.
+python renewgy_parser.py --input input.xlsx --output output.csv --config ean_config.json --sheet-index 1 --start-date 2023-01-01 --power-type active --verbose
+```
+
+#### Exemples de gestion automatique des noms de fichiers
+
+```bash
+# Fichier standard avec puissance active.
+# Input: data.xlsx → Output: data_active.csv
+python renewgy_parser.py --input data.xlsx --output data.csv --config ean_config.json --power-type active
+
+# EAN bi-horaire avec puissance inductive.
+# Input: ean_bihoraire.xlsx → Output: ean_bihoraire_inductive_peak.csv + ean_bihoraire_inductive_offpeak.csv
+python renewgy_parser.py --input ean_bihoraire.xlsx --output ean_bihoraire.csv --config ean_config.json --power-type inductive
+
+# Traitement par lots avec suffixes automatiques.
+# Tous les fichiers auront le suffixe _capacitive, et les EAN bi-horaires auront _peak/_offpeak en plus
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ean_config.json --power-type capacitive
 ```
 
 ### Arguments disponibles
 
 ```bash
-python src/renewgy_parser.py --help
+python renewgy_parser.py --help
 ```
 
-| Argument | Description | Obligatoire |
-|----------|-------------|-------------|
-| `--input` | Fichier Excel d'entrée | Oui (mode fichier unique) |
-| `--output` | Fichier CSV de sortie | Oui (mode fichier unique) |
-| `--batch-input` | Dossier d'entrée pour le traitement par lots | Oui (mode batch) |
-| `--batch-output` | Dossier de sortie pour le traitement par lots | Oui (mode batch) |
-| `--config` | Fichier de configuration EAN | **Toujours obligatoire** |
-| `--sheet-index` | Index de la feuille Excel (défaut: 2) | Non |
-| `--pattern` | Pattern de fichiers pour le mode batch | Non |
-| `--start-date` | Date de début au format YYYY-MM-DD | Non |
-| `--verbose` | Affichage détaillé | Non |
-| `--quiet` | Affichage minimal | Non |
+| Argument | Description | Obligatoire | Valeurs possibles |
+|----------|-------------|-------------|-------------------|
+| `--input` | Fichier Excel d'entrée | Oui (mode fichier unique) | Chemin vers fichier .xlsx |
+| `--output` | Fichier CSV de sortie | Oui (mode fichier unique) | Chemin vers fichier .csv |
+| `--batch-input` | Dossier d'entrée pour le traitement par lots | Oui (mode batch) | Chemin vers dossier |
+| `--batch-output` | Dossier de sortie pour le traitement par lots | Oui (mode batch) | Chemin vers dossier |
+| `--config` | Fichier de configuration EAN | **Toujours obligatoire** | Chemin vers fichier .json |
+| `--power-type` | Type de puissance à traiter | Non | `active`, `inductive`, `capacitive` (défaut: `active`) |
+| `--sheet-index` | Index de la feuille Excel | Non | Entier (défaut: 2) |
+| `--pattern` | Pattern de fichiers pour le mode batch | Non | Pattern glob (ex: `*specific*`) |
+| `--start-date` | Date de début au format YYYY-MM-DD | Non | Date ISO (ex: `2023-01-01`) |
+| `--verbose` | Affichage détaillé | Non | Flag (pas de valeur) |
+| `--quiet` | Affichage minimal | Non | Flag (pas de valeur) |
+
+**Nouvelles fonctionnalités** :
+
+- **`--power-type`** : Définit le type de puissance et génère automatiquement le suffixe approprié
+- **Gestion EAN bi-horaires** : Détection automatique, génération de fichiers `_peak` et `_offpeak`
+- **Noms intelligents** : Suffixe automatique selon le type de puissance pour éviter l'écrasement
 
 ## ⚙️ Configuration
 
@@ -269,18 +339,35 @@ python src/renewgy_parser.py --help
 
 ```json
 {
-  "example_ean_123456789": {
+  "example_ean_standard": {
     "source_id": "123456",
     "variable_id": "789012",
-    "description": "Example EAN mapping"
+    "description": "Example standard EAN mapping"
   },
-  "another_ean_987654321": {
+  "example_ean_bihoraire_peak": {
     "source_id": "987654",
-    "variable_id": "321098",
-    "description": "Another example EAN mapping"
+    "variable_id": "321098", 
+    "description": "Example bi-hourly EAN mapping (peak hours)"
+  },
+  "example_ean_bihoraire_offpeak": {
+    "source_id": "987654",
+    "variable_id": "321099",
+    "description": "Example bi-hourly EAN mapping (off-peak hours)"
   }
 }
 ```
+
+**Nouvelles fonctionnalités de configuration** :
+
+- **`is_bihoraire`** : Définit si l'EAN utilise la tarification bi-horaire (peak/off-peak)
+- **`peak_hours`** : Configuration des heures de pointe par jour de la semaine (optionnel)
+- **Génération automatique** : Si `is_bihoraire: true`, génère automatiquement deux fichiers CSV
+- **Heures par défaut** : Si `peak_hours` n'est pas spécifié, utilise les règles standard belges
+
+**Règles horaires par défaut pour les EAN bi-horaires** :
+
+- **Peak** : 07h00-22h00 (lundi-vendredi uniquement)
+- **Off-peak** : 22h00-07h00 (lundi-vendredi) + tout le weekend (samedi et dimanche complets)
 
 **Sécurité** : Ne jamais committer ce fichier dans votre repository. Il est automatiquement ignoré par `.gitignore`.
 
@@ -302,12 +389,30 @@ Le parser utilise une configuration par défaut qui peut être ajustée :
 
 ## 📊 Format de sortie CSV
 
+### Nomenclature des fichiers de sortie
+
+Le parser génère automatiquement des noms de fichiers intelligents selon le contexte :
+
+#### EAN standard (tarif unique)
+
+- **Puissance active** : `fichier_active.csv`
+- **Puissance inductive** : `fichier_inductive.csv`
+- **Puissance capacitive** : `fichier_capacitive.csv`
+
+#### EAN bi-horaires (tarification peak/off-peak)
+
+- **Puissance active** : `fichier_active_peak.csv` + `fichier_active_offpeak.csv`
+- **Puissance inductive** : `fichier_inductive_peak.csv` + `fichier_inductive_offpeak.csv`
+- **Puissance capacitive** : `fichier_capacitive_peak.csv` + `fichier_capacitive_offpeak.csv`
+
+### Structure des fichiers CSV
+
 Le fichier CSV généré contient les colonnes suivantes :
 
 | Colonne | Description |
 |---------|-------------|
 | `date` | Timestamp de la mesure |
-| `value` | Valeur mesurée |
+| `value` | Valeur mesurée (selon le type de puissance sélectionné) |
 | `meternumber` | Numéro EAN du compteur |
 | `source_id` | Identifiant source du mapping |
 | `source_serialnumber` | Numéro de série (vide par défaut) |
@@ -315,6 +420,24 @@ Le fichier CSV généré contient les colonnes suivantes :
 | `source_name` | Nom source (vide par défaut) |
 | `mapping_config` | Configuration mapping (vide par défaut) |
 | `variable_id` | Identifiant variable du mapping |
+
+### Exemples de données
+
+**EAN standard (puissance active)** :
+
+```csv
+date,value,meternumber,source_id,source_serialnumber,source_ean,source_name,mapping_config,variable_id
+2023-01-01 00:00:00,1.25,541448965000143475,123456,,,,,789012
+2023-01-01 00:15:00,1.30,541448965000143475,123456,,,,,789012
+```
+
+**EAN bi-horaire (puissance inductive, fichier peak)** :
+
+```csv
+date,value,meternumber,source_id,source_serialnumber,source_ean,source_name,mapping_config,variable_id
+2023-01-01 07:00:00,0.85,987654321000000123,987654,,,,,321098
+2023-01-01 07:15:00,0.92,987654321000000123,987654,,,,,321098
+```
 
 ## 📁 Structure du projet
 
@@ -344,28 +467,59 @@ RenewgyParser/
 
 ## 📝 Exemples d'utilisation
 
-### Exemple 1 : Traitement simple
+### Exemple 1 : Traitement simple avec puissance active
 
 ```bash
-python src/renewgy_parser.py --input data.xlsx --output output.csv --config ean_config.json
+python renewgy_parser.py --input data.xlsx --output output.csv --config ean_config.json --power-type active
+# Résultat : output_active.csv (ou output_active_peak.csv + output_active_offpeak.csv si EAN bi-horaire)
 ```
 
-### Exemple 2 : Traitement avec filtrage par date
+### Exemple 2 : Traitement avec puissance inductive et filtrage par date
 
 ```bash
-python src/renewgy_parser.py --input data.xlsx --output output.csv --config ean_config.json --start-date 2023-01-01
+python renewgy_parser.py --input data.xlsx --output output.csv --config ean_config.json --power-type inductive --start-date 2023-01-01
+# Résultat : output_inductive.csv avec données à partir du 1er janvier 2023
 ```
 
-### Exemple 3 : Traitement par lots avec configuration
+### Exemple 3 : Traitement par lots avec puissance capacitive
 
 ```bash
-python src/renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ./ean_config.json --start-date 2023-06-01 --verbose
+python renewgy_parser.py --batch-input ./excel_files --batch-output ./csv_files --config ./ean_config.json --power-type capacitive --start-date 2023-06-01 --verbose
+# Résultat : Tous les fichiers Excel traités avec suffixe _capacitive
 ```
 
-### Exemple 4 : Utilisation Docker complète
+### Exemple 4 : EAN bi-horaire avec puissance inductive
 
 ```bash
-docker run --rm -v $(pwd)/excel_files:/parser/excel_files -v $(pwd)/csv_files:/parser/csv_files -v $(pwd):/parser/config renewgy-parser --batch-input /parser/excel_files --batch-output /parser/csv_files --config /parser/config/ean_config.json --start-date 2023-01-01
+python renewgy_parser.py --input ean_bihoraire.xlsx --output ean_bihoraire.csv --config ean_config.json --power-type inductive
+# Résultat automatique : 
+# - ean_bihoraire_inductive_peak.csv (données heures pleines)
+# - ean_bihoraire_inductive_offpeak.csv (données heures creuses)
+```
+
+### Exemple 5 : Interface web avec Docker
+
+```bash
+# Lancement automatique avec configuration complète
+./launcher_docker.sh
+
+# Ou manuellement
+docker run --rm -v $(pwd)/excel_files:/renewgy/excel_files -v $(pwd)/csv_files:/renewgy/csv_files -v $(pwd)/ean_config.json:/renewgy/ean_config.json -p 5001:5000 renewgy-parser
+# Interface accessible sur http://localhost:5001
+```
+
+### Exemple 6 : Traitement automatisé en production
+
+```bash
+# Script de traitement quotidien avec toutes les nouvelles fonctionnalités
+python renewgy_parser.py \
+  --batch-input /data/excel_files \
+  --batch-output /data/csv_files \
+  --config /config/ean_config.json \
+  --power-type active \
+  --start-date $(date -d "yesterday" +%Y-%m-%d) \
+  --verbose
+# Traite automatiquement tous les nouveaux fichiers avec les données d'hier
 ```
 
 ## 🔧 Dépannage
@@ -384,23 +538,44 @@ docker run --rm -v $(pwd)/excel_files:/parser/excel_files -v $(pwd)/csv_files:/p
 3. **Erreur "EAN not found in config"**
    - Ajoutez le mapping EAN manquant dans votre fichier de configuration
    - Vérifiez l'orthographe exacte de l'EAN
+   - Pour les EAN bi-horaires, ajoutez `"is_bihoraire": true` dans la configuration
 
-4. **Interface web ne démarre pas**
+4. **Erreur "Power type column not found"**
+   - Vérifiez que le type de puissance sélectionné existe dans votre fichier Excel
+   - Les colonnes acceptées : `Active Energy`, `Inductive Energy`, `Capacitive Energy`
+   - Utilisez `--verbose` pour voir les colonnes détectées
+
+5. **Problème avec les EAN bi-horaires**
+   - Vérifiez la configuration `"is_bihoraire": true` dans `ean_config.json`
+   - Les règles horaires par défaut sont appliquées si `peak_hours` n'est pas spécifié
+   - Deux fichiers sont générés automatiquement : `_peak.csv` et `_offpeak.csv`
+
+6. **Interface web ne démarre pas**
    - Vérifiez que le port 5001 n'est pas utilisé
    - Utilisez les launchers automatiques selon votre plateforme :
      - **macOS/Linux** : `./launcher_python.sh` ou `./launcher_docker.sh`
      - **Windows** : `launcher_python.bat` ou `launcher_docker.bat`
 
-5. **Erreur "Port already in use" avec Docker**
+7. **Erreur "Port already in use" avec Docker**
    - Le port 5001 est configuré par défaut (au lieu de 5000 pour éviter les conflits avec AirPlay sur macOS)
    - Si le port 5001 est occupé, modifiez le port dans `docker-compose.yml`
    - Puis accédez à <http://localhost:5002>
 
-6. **Problème d'environnement virtuel**
+8. **Problème d'environnement virtuel**
    - Le launcher Python gère automatiquement l'environnement virtuel
    - En cas de problème, supprimez le dossier `renewgy_parser_venv/` et relancez :
      - **macOS/Linux** : `./launcher_python.sh`
      - **Windows** : `launcher_python.bat`
+
+9. **Fichiers de sortie non générés**
+   - Vérifiez les permissions d'écriture dans le dossier `csv_files/`
+   - Pour les EAN bi-horaires, vérifiez que les données contiennent bien des heures de pointe et creuses
+   - Utilisez `--verbose` pour voir le détail du traitement
+
+10. **Détection automatique échoue**
+    - La détection se base sur des mots-clés standard dans les en-têtes
+    - Si votre fichier Excel a une structure non-standard, contactez le support
+    - Utilisez `--verbose` pour voir les colonnes et structures détectées
 
 ### Logs et débogage
 
@@ -518,7 +693,38 @@ Pour toute question ou problème :
 
 ## 📈 Changelog
 
-### v1.0.0
+### v2.0.0 - Édition Intelligence & Robustesse (Juillet 2025)
+
+**🚀 Nouvelles fonctionnalités majeures :**
+
+- **🎯 Sélection du type de puissance** : Choix entre Active, Inductive et Capacitive
+- **⚡ Gestion complète des EAN bi-horaires** : Support automatique peak/off-peak avec fichiers séparés
+- **🧠 Détection automatique intelligente** : Colonnes, structure et format détectés dynamiquement
+- **📝 Noms de fichiers intelligents** : Suffixes automatiques selon le type de puissance et le mode horaire
+- **🔄 Interface web améliorée** : Sélection dynamique avec feedback en temps réel
+
+**🛡️ Améliorations de robustesse :**
+
+- **Détection dynamique** des en-têtes et début des données
+- **Validation robuste** de la structure des fichiers Excel
+- **Gestion d'erreurs avancée** avec messages détaillés
+- **Logging professionnel** avec niveaux configurables
+
+**💻 Interface utilisateur :**
+
+- **Mode batch amélioré** : Configuration individuelle par fichier
+- **Mise à jour automatique** des noms lors du changement de type de puissance
+- **Feedback instantané** pour toutes les opérations
+- **Interface responsive** optimisée
+
+**🔧 Technique :**
+
+- **Type hints complets** et documentation professionnelle
+- **Code modulaire** et maintenable
+- **Tests CLI et web** validés pour tous les cas d'usage
+- **Configuration flexible** pour les règles horaires personnalisées
+
+### v1.0.0 - Version Initiale
 
 - Parser initial avec support Excel vers CSV
 - Validation des données et gestion d'erreurs

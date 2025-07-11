@@ -1,9 +1,13 @@
 """
+Renewgy Parser - Excel to CSV Converter.
+
 This module handles the conversion of Renewgy Excel files to standardized CSV format
-with proper data validation, error handling, and logging capabilities.
+with support for bi-hourly EAN splitting, dynamic column detection, and proper data validation.
 """
 __title__: str = "renewgy_parser"
-__version__: str = "1.0.0"
+__version__: str = "2.0.0"
+__version_info__ = (2, 0, 0)
+__release_date__: str = "2025-01-11"
 __author__: str = "Brice Petit"
 __license__: str = "MIT"
 
@@ -11,7 +15,7 @@ __license__: str = "MIT"
 # ------------------------------------------- IMPORTS ------------------------------------------- #
 # ----------------------------------------------------------------------------------------------- #
 
-# Imports standard libraries.
+# Standard library imports.
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
@@ -19,13 +23,10 @@ import json
 import logging
 from pathlib import Path
 import sys
-from typing import Dict, List, Optional, Tuple, Union, NoReturn
+from typing import Dict, List, Optional, Tuple, Union, NoReturn, Any
 
-# Imports third party libraries.
+# Third party imports.
 import pandas as pd
-
-# Imports from src.
-
 
 # ----------------------------------------------------------------------------------------------- #
 # ------------------------------------ TYPE DEFINITIONS ----------------------------------------- #
@@ -36,6 +37,10 @@ import pandas as pd
 class EANMapping:
     """
     Data class for EAN mapping configuration.
+    
+    :param source_id:   Identifier for the data source.
+    :param variable_id: Variable identifier in the target system.
+    :param description: Human-readable description of the EAN.
     """
     source_id: str
     variable_id: str
@@ -45,12 +50,22 @@ class EANMapping:
 @dataclass
 class ParserConfig:
     """
-    Configuration for the Renewgy parser.
+    Configuration parameters for the Renewgy parser.
+    
+    :param sheet_index:     Excel sheet index to process (0-based).
+    :param header_row:      Row index for header detection.
+    :param header_col:      Column index for header detection.
+    :param data_start_row:  Default row index where data starts.
+    :param timestamp_col:   Default column index for timestamps.
+    :param value_col:       Default column index for values.
+    :param min_rows:        Minimum required rows for validation.
+    :param min_cols:        Minimum required columns for validation.
+    :param start_date:      Optional start date filter.
     """
-    sheet_index: int = 2
+    sheet_index: int = 0
     header_row: int = 0
     header_col: int = 1
-    data_start_row: int = 5
+    data_start_row: int = 4
     timestamp_col: int = 0
     value_col: int = 2
     min_rows: int = 6
@@ -62,14 +77,14 @@ class ParserConfig:
 # -------------------------------------- GLOBAL VARIABLES --------------------------------------- #
 # ----------------------------------------------------------------------------------------------- #
 
-# Setup logging.
+# Setup logging configuration.
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Column names for the CSV output.
+# Column names for the standardized CSV output.
 CSV_COLUMN_NAMES: List[str] = [
     'date',
     'value',
@@ -82,24 +97,24 @@ CSV_COLUMN_NAMES: List[str] = [
     'variable_id'
 ]
 
-# Default parser configuration.
+# Default parser configuration instance.
 DEFAULT_CONFIG = ParserConfig()
 
 # ----------------------------------------------------------------------------------------------- #
-# ------------------------------------------ FUNCTIONS ------------------------------------------ #
+# ---------------------------------------- CORE FUNCTIONS --------------------------------------- #
 # ----------------------------------------------------------------------------------------------- #
 
 
 def load_ean_mapping_from_file(config_path: Path) -> Dict[str, EANMapping]:
     """
-    Load EAN mapping from external JSON file.
+    Load EAN mapping configuration from JSON file.
 
     :param config_path:         Path to the JSON configuration file.
 
-    :return:                    Dictionary of EAN mappings.
-    
+    :return:                    Dictionary of EAN mappings keyed by EAN identifier.
+
     :raises FileNotFoundError:  If config file doesn't exist.
-    :raises ValueError:         If config file is invalid.
+    :raises ValueError:         If config file format is invalid.
     """
     if not config_path.exists():
         raise FileNotFoundError(f"Configuration file not found: {config_path}")
@@ -118,26 +133,33 @@ def load_ean_mapping_from_file(config_path: Path) -> Dict[str, EANMapping]:
         raise ValueError(f"Invalid configuration file format: {exc}") from exc
 
 
-def validate_excel_structure(excel_df: pd.DataFrame, config: ParserConfig) -> NoReturn:
+def validate_excel_structure(excel_df: pd.DataFrame, config: ParserConfig) -> None:
     """
-    Validate the structure of the Excel DataFrame.
+    Validate the structure of the Excel DataFrame for processing.
 
-    :param excel_df:    The loaded Excel DataFrame.
-    :param config:      Parser configuration.
+    :param excel_df:    The loaded Excel DataFrame to validate.
+    :param config:      Parser configuration with validation parameters.
 
-    :raises ValueError: If the structure is invalid.
+    :raises ValueError: If the structure is invalid for processing.
     """
     if excel_df.shape[0] < config.min_rows:
         raise ValueError(
-            f"Excel file has insufficient rows: {excel_df.shape[0]} < {config.min_rows}"
+            f"Excel file has insufficient rows: {excel_df.shape[0]} < {config.min_rows}. "
+            f"This sheet might be empty or contain summary data only."
         )
     if excel_df.shape[1] < config.min_cols:
+        non_empty_cols = excel_df.dropna(axis=1, how='all').shape[1]
         raise ValueError(
-            f"Excel file has insufficient columns: {excel_df.shape[1]} < {config.min_cols}"
+            f"Excel file has insufficient columns: {excel_df.shape[1]} < {config.min_cols}. "
+            f"Non-empty columns: {non_empty_cols}. "
+            f"This sheet might be a summary/pivot table. Try a different sheet index."
         )
     # Check if critical cells are not empty.
     if pd.isna(excel_df.iloc[config.header_row, config.header_col]):
-        raise ValueError("EAN header cell is empty")
+        raise ValueError(
+            f"EAN header cell is empty at position ({config.header_row},{config.header_col}). "
+            f"This might not be a data sheet or the sheet structure is different."
+        )
 
 
 def extract_ean_from_excel(excel_df: pd.DataFrame, config: ParserConfig) -> str:
@@ -165,26 +187,82 @@ def extract_ean_from_excel(excel_df: pd.DataFrame, config: ParserConfig) -> str:
         raise ValueError(f"Failed to extract EAN: {exc}") from exc
 
 
+def find_consumption_column(excel_df: pd.DataFrame, consumption_type: str) -> int:
+    """
+    Find the column index for the specified consumption type.
+    Dynamically detects the header row by looking for "Role description".
+    
+    :param excel_df:            The loaded Excel DataFrame.
+    :param consumption_type:    The consumption type to search for.
+    
+    :return:                    Column index.
+    
+    :raises ValueError:         If the consumption type is not found.
+    """
+    # Check if we have enough rows.
+    if len(excel_df) < 2:
+        raise ValueError("Excel file doesn't have enough rows to search for consumption type")
+    # Find the row containing "Role description" (case insensitive).
+    header_row_index = None
+    # Check first 5 rows.
+    for row_idx in range(min(5, len(excel_df))):
+        row = excel_df.iloc[row_idx]
+        for cell_value in row:
+            if pd.notna(cell_value) and "role description" in str(cell_value).lower():
+                header_row_index = row_idx
+                logger.info("Found header row at index %s (row %s)", row_idx, row_idx + 1)
+                break
+        if header_row_index is not None:
+            break
+    if header_row_index is None:
+        raise ValueError("Could not find header row containing 'Role description'")
+    # Search for the consumption type in the found header row.
+    header_row = excel_df.iloc[header_row_index]
+    for col_idx, cell_value in enumerate(header_row):
+        if pd.notna(cell_value) and str(cell_value).strip() == consumption_type:
+            logger.info(
+                "Found '%s' at column %s (row %s)", consumption_type, col_idx, header_row_index + 1
+            )
+            return col_idx
+    # If not found, show available options from the header row.
+    available_types = [
+        str(cell).strip() for cell in header_row 
+        if pd.notna(cell) and str(cell).strip().startswith("MEASURED")
+    ]
+    raise ValueError(
+        f"Consumption type '{consumption_type}' not found in header row {header_row_index + 1}. "
+        f"Available types: {available_types}"
+    )
+
+
 def extract_data_from_excel(
-    excel_df: pd.DataFrame, config: ParserConfig
+    excel_df: pd.DataFrame, config: ParserConfig,
+    consumption_type: str = "MEASURED ACTIVE CONSUMPTION"
 ) -> Tuple[pd.Series, pd.Series]:
     """
-    Extract timestamps and values from Excel file.
+    Extract timestamps and values from Excel file using dynamic column detection.
     
-    :param excel_df:    The loaded Excel DataFrame.
-    :param config:      Parser configuration.
+    :param excel_df:            The loaded Excel DataFrame.
+    :param config:              Parser configuration.
+    :param consumption_type:    The consumption type to search for.
 
-    :return:            Tuple of (timestamps, values).
+    :return:                    Tuple of (timestamps, values).
 
-    :raises ValueError: If data extraction fails.
+    :raises ValueError:         If data extraction fails.
     """
     try:
+        # Find the consumption column dynamically.
+        value_col = find_consumption_column(excel_df, consumption_type)
+        # Find the timestamp column dynamically.
+        timestamp_col = find_timestamp_column(excel_df)
+        # Find the data start row dynamically.
+        data_start_row = find_data_start_row(excel_df)
         # Extract timestamps.
         timestamps = (
-            excel_df.iloc[config.data_start_row:, config.timestamp_col].reset_index(drop=True)
+            excel_df.iloc[data_start_row:, timestamp_col].reset_index(drop=True)
         )
-        # Extract values.
-        values = excel_df.iloc[config.data_start_row:, config.value_col]
+        # Extract values from the dynamically found column.
+        values = excel_df.iloc[data_start_row:, value_col]
         # Convert to float and handle errors.
         values = pd.to_numeric(values, errors='coerce').astype(float)
         values = values.reset_index(drop=True)
@@ -244,15 +322,18 @@ def parse_renewgy_excel_to_csv(
     file_path: Union[str, Path],
     output_csv_path: Union[str, Path],
     ean_mapping: Dict[str, EANMapping],
-    config: Optional[ParserConfig] = None
+    config: Optional[ParserConfig] = None,
+    consumption_type: str = "MEASURED ACTIVE CONSUMPTION"
 ) -> NoReturn:
     """
     Parses the Renewgy Excel file and converts it to a CSV file.
+    Automatically generates two CSV files (peak and offpeak) for bi-hourly EANs.
 
     :param file_path:           Path to the input Excel file.
     :param output_csv_path:     Path to the output CSV file.
     :param ean_mapping:         EAN mapping dictionary (required).
     :param config:              Parser configuration (uses default if None).
+    :param consumption_type:    Type of consumption to extract.
 
     :raises FileNotFoundError:  If the input Excel file doesn't exist.
     :raises KeyError:           If the EAN is not found in the mapping dictionary.
@@ -274,26 +355,65 @@ def parse_renewgy_excel_to_csv(
         # Extract EAN.
         ean = extract_ean_from_excel(excel_df, config)
         logger.info("Extracted EAN: %s", ean)
-        # Validate EAN exists in mapping.
-        if ean not in ean_mapping:
-            # Show first 5 for reference.
-            available_eans = list(ean_mapping.keys())[:5]
-            raise KeyError(
-                f"EAN '{ean}' not found in mapping dictionary. "
-                f"Available EANs include: {available_eans}..."
+        # Check if this EAN has peak/offpeak variants.
+        if has_peak_offpeak_variants(ean, ean_mapping):
+            logger.info("EAN '%s' has peak/offpeak variants - generating two CSV files", ean)
+            # Extract data.
+            timestamps, values = extract_data_from_excel(excel_df, config, consumption_type)
+            logger.info("Extracted %s data points", len(values))
+            # Split data by period.
+            (peak_timestamps, peak_values), (offpeak_timestamps, offpeak_values) = (
+                split_data_by_period(timestamps, values)
             )
-        mapping = ean_mapping[ean]
-        logger.info("Found mapping: %s", mapping.description)
-        # Extract data.
-        timestamps, values = extract_data_from_excel(excel_df, config)
-        logger.info("Extracted %s data points", len(values))
-        # Create output DataFrame.
-        csv_data = create_output_dataframe(timestamps, values, ean, mapping)
-        # Ensure output directory exists.
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        # Save to CSV.
-        csv_data.to_csv(output_path, index=False, encoding='utf-8-sig')
-        logger.info("Successfully saved CSV to: %s", output_path)
+            logger.info(
+                "Split data: %s peak points, %s offpeak points", len(peak_values),
+                len(offpeak_values)
+            )
+            # Get mappings for peak and offpeak.
+            peak_mapping = find_ean_mapping(ean, ean_mapping, is_peak=True)
+            offpeak_mapping = find_ean_mapping(ean, ean_mapping, is_peak=False)
+            # Ensure output directory exists.
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            # Generate peak CSV.
+            if len(peak_values) > 0:
+                peak_csv_data = create_output_dataframe(
+                    peak_timestamps, peak_values, ean, peak_mapping
+                )
+                peak_output_path = (
+                    output_path.parent / f"{output_path.stem}_peak{output_path.suffix}"
+                )
+                peak_csv_data.to_csv(peak_output_path, index=False, encoding='utf-8-sig')
+                logger.info("Successfully saved peak CSV to: %s", peak_output_path)
+            else:
+                logger.warning("No peak data found for EAN %s", ean)
+            # Generate offpeak CSV.
+            if len(offpeak_values) > 0:
+                offpeak_csv_data = create_output_dataframe(
+                    offpeak_timestamps, offpeak_values, ean, offpeak_mapping
+                )
+                offpeak_output_path = (
+                    output_path.parent / f"{output_path.stem}_offpeak{output_path.suffix}"
+                )
+                offpeak_csv_data.to_csv(offpeak_output_path, index=False, encoding='utf-8-sig')
+                logger.info("Successfully saved offpeak CSV to: %s", offpeak_output_path)
+            else:
+                logger.warning("No offpeak data found for EAN %s", ean)   
+        else:
+            # Standard processing for non-bi-hourly EANs.
+            logger.info("EAN '%s' is a standard (non-bi-hourly) EAN", ean)
+            # Find mapping using the new function (for better error messages).
+            mapping = find_ean_mapping(ean, ean_mapping)
+            logger.info("Found mapping: %s", mapping.description)
+            # Extract data.
+            timestamps, values = extract_data_from_excel(excel_df, config, consumption_type)
+            logger.info("Extracted %s data points", len(values))
+            # Create output DataFrame.
+            csv_data = create_output_dataframe(timestamps, values, ean, mapping)
+            # Ensure output directory exists.
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            # Save to CSV.
+            csv_data.to_csv(output_path, index=False, encoding='utf-8-sig')
+            logger.info("Successfully saved CSV to: %s", output_path)
     except FileNotFoundError as exc:
         logger.error("Input file not found: %s", input_path)
         raise FileNotFoundError(f"Input file not found: {input_path}") from exc
@@ -313,7 +433,8 @@ def process_multiple_files(
     output_dir: Path,
     ean_mapping: Dict[str, EANMapping],
     pattern: str = "*.xlsx",
-    config: Optional[ParserConfig] = None
+    config: Optional[ParserConfig] = None,
+    consumption_type: str = "MEASURED ACTIVE CONSUMPTION"
 ) -> Dict[str, str]:
     """
     Process multiple Excel files in a directory.
@@ -351,7 +472,9 @@ def process_multiple_files(
     for input_file in input_files:
         output_file = output_dir / f"{input_file.stem}.csv"
         try:
-            parse_renewgy_excel_to_csv(input_file, output_file, ean_mapping, config)
+            parse_renewgy_excel_to_csv(
+                input_file, output_file, ean_mapping, config, consumption_type
+            )
             results[input_file.name] = "SUCCESS"
             logger.info("Processed: %s", input_file.name)
         except Exception as exc:
@@ -359,6 +482,252 @@ def process_multiple_files(
             logger.error("Failed: %s - %s", input_file.name, exc)
     return results
 
+
+def find_data_start_row(excel_df: pd.DataFrame) -> int:
+    """
+    Find the row index where data starts.
+    Looks for the row containing "Profile description" and returns the next row.
+    
+    :param excel_df:    The loaded Excel DataFrame.
+    
+    :return:            Row index where data starts.
+    
+    :raises ValueError: If data start row cannot be determined.
+    """
+    # Look for "Profile description" in the first few rows.
+    # Check first 6 rows.
+    for row_idx in range(min(6, len(excel_df))):
+        row = excel_df.iloc[row_idx]
+        for cell_value in row:
+            if pd.notna(cell_value) and "profile description" in str(cell_value).lower():
+                data_start_row = row_idx + 1  # Data starts on the next row
+                logger.info(
+                    "Found data start at row %s (after profile description at row %s)",
+                    data_start_row + 1, row_idx + 1
+                )
+                return data_start_row
+    # Fallback to default if not found.
+    logger.warning("Could not find 'Profile description', using default data start row 4")
+    return 4
+
+
+def is_peak_hour(timestamp: pd.Timestamp) -> bool:
+    """
+    Determine if a timestamp is during peak hours.
+    Peak hours:     7h-22h Monday to Friday
+    Offpeak hours:  22h-7h Monday to Friday + all weekend
+
+    :param timestamp:   The timestamp to check
+
+    :return:            True if peak hour, False if offpeak
+    """
+    # Convert to datetime if it's not already.
+    if isinstance(timestamp, str):
+        timestamp = pd.to_datetime(timestamp)
+    # Monday is 0, Sunday is 6.
+    weekday = timestamp.weekday()
+    hour = timestamp.hour
+    # Weekend is always offpeak. Saturday (5) or Sunday (6).
+    if weekday >= 5:
+        return False
+    # Weekday: peak is 7h-22h (7 <= hour < 22).
+    return 7 <= hour < 22
+
+
+def find_ean_mapping(
+    ean: str, ean_mapping: Dict[str, EANMapping], is_peak: bool = None
+) -> EANMapping:
+    """
+    Find the appropriate EAN mapping for the given EAN.
+    If the EAN has peak/offpeak variants, return the appropriate one.
+    If is_peak is None, return the simple EAN mapping (for non-bi-hourly EANs).
+    
+    :param ean:         The base EAN identifier.
+    :param ean_mapping: EAN mapping dictionary.
+    :param is_peak:     True for peak hours, False for offpeak, None for simple EAN.
+
+    :return:            The appropriate EAN mapping.
+
+    :raises KeyError:   If no suitable mapping is found.
+    """
+    # First check if we're looking for a specific peak/offpeak variant.
+    if is_peak is not None:
+        suffix = "_peak" if is_peak else "_offpeak"
+        variant_key = f"{ean}{suffix}"
+        if variant_key in ean_mapping:
+            return ean_mapping[variant_key]
+    # Check if the simple EAN exists.
+    if ean in ean_mapping:
+        return ean_mapping[ean]
+    # If we couldn't find a direct match and is_peak was specified,
+    # check if this EAN has any peak/offpeak variants.
+    peak_key = f"{ean}_peak"
+    offpeak_key = f"{ean}_offpeak"
+    if peak_key in ean_mapping or offpeak_key in ean_mapping:
+        if is_peak is None:
+            raise KeyError(
+                f"EAN '{ean}' has peak/offpeak variants but no period specified. "
+                f"This EAN requires bi-hourly processing."
+            )
+        # We were looking for a specific variant but didn't find it.
+        missing_variant = "peak" if is_peak else "offpeak"
+        raise KeyError(
+            f"EAN '{ean}' has bi-hourly variants but '{missing_variant}' mapping not found"
+        )
+    # No mapping found at all.
+    available_eans = [k for k in ean_mapping.keys() if k.startswith(ean)]
+    if available_eans:
+        raise KeyError(
+            f"EAN '{ean}' not found. Similar EANs available: {available_eans}"
+        )
+    available_eans = list(ean_mapping.keys())[:5]
+    raise KeyError(
+        f"EAN '{ean}' not found in mapping dictionary. "
+        f"Available EANs include: {available_eans}..."
+    )
+
+
+def has_peak_offpeak_variants(ean: str, ean_mapping: Dict[str, EANMapping]) -> bool:
+    """
+    Check if an EAN has peak/offpeak variants in the mapping.
+    
+    :param ean:         The base EAN identifier.
+    :param ean_mapping: EAN mapping dictionary
+
+    :return:            True if the EAN has both peak and offpeak variants
+    """
+    peak_key = f"{ean}_peak"
+    offpeak_key = f"{ean}_offpeak"
+    return peak_key in ean_mapping and offpeak_key in ean_mapping
+
+
+def split_data_by_period(
+    timestamps: pd.Series, values: pd.Series
+) -> Tuple[Tuple[pd.Series, pd.Series], Tuple[pd.Series, pd.Series]]:
+    """
+    Split timestamps and values into peak and offpeak periods.
+
+    :param timestamps:  Series of timestamps
+    :param values:      Series of values
+
+    :return: Tuple of ((peak_timestamps, peak_values), (offpeak_timestamps, offpeak_values))
+    """
+    # Convert timestamps to datetime.
+    timestamps_dt = pd.to_datetime(timestamps)
+    # Create boolean mask for peak hours
+    peak_mask = timestamps_dt.apply(is_peak_hour)
+    # Split data.
+    peak_timestamps = timestamps[peak_mask].reset_index(drop=True)
+    peak_values = values[peak_mask].reset_index(drop=True)
+    offpeak_timestamps = timestamps[~peak_mask].reset_index(drop=True)
+    offpeak_values = values[~peak_mask].reset_index(drop=True)
+    return (peak_timestamps, peak_values), (offpeak_timestamps, offpeak_values)
+
+
+def find_timestamp_column(excel_df: pd.DataFrame) -> int:
+    """
+    Find the column index that contains timestamps/dates.
+    Looks in the header row for "Date" or similar, and validates with actual data.
+    
+    :param excel_df:        The loaded Excel DataFrame.
+    
+    :return:                Column index for timestamps.
+    
+    :raises ValueError:     If timestamp column cannot be found.
+    """
+    # Find the header row first.
+    header_row_index = None
+    for row_idx in range(min(5, len(excel_df))):
+        row = excel_df.iloc[row_idx]
+        for cell_value in row:
+            if pd.notna(cell_value) and "role description" in str(cell_value).lower():
+                header_row_index = row_idx
+                break
+        if header_row_index is not None:
+            break
+    if header_row_index is None:
+        logger.warning("Could not find header row, using heuristic approach")
+        # Fallback: look for the column that contains date-like strings.
+        data_start_row = find_data_start_row(excel_df)
+        # Check first 4 columns.
+        for col_idx in range(min(4, excel_df.shape[1])):
+            sample_values = excel_df.iloc[data_start_row:data_start_row+3, col_idx]
+            date_like_count = 0
+            for val in sample_values:
+                if pd.notna(val):
+                    val_str = str(val)
+                    # Check if it looks like a date (contains year pattern or datetime).
+                    if (
+                        '2024' in val_str or '2023' in val_str or '2025' in val_str or 
+                        '2022' in val_str or '-' in val_str or ':' in val_str
+                    ):
+                        date_like_count += 1
+            # At least 2 out of 3 samples look like dates.
+            if date_like_count >= 2:
+                logger.info("Found timestamp column at index %s using heuristic", col_idx)
+                return col_idx
+        # Final fallback.
+        logger.warning("Could not detect timestamp column, using column 0")
+        return 0
+    # Search for "Date" in the header row.
+    header_row = excel_df.iloc[header_row_index]
+    for col_idx, cell_value in enumerate(header_row):
+        if pd.notna(cell_value) and "date" in str(cell_value).lower():
+            logger.info(
+                "Found timestamp column 'Date' at index %s (row %s)", col_idx, header_row_index + 1
+            )
+            return col_idx
+
+    # If "Date" not found, look for timestamp-like data in the actual data rows.
+    data_start_row = find_data_start_row(excel_df)
+    # Check first 4 columns.
+    for col_idx in range(min(4, excel_df.shape[1])):
+        sample_values = excel_df.iloc[data_start_row:data_start_row+5, col_idx]
+        date_like_count = 0
+        for val in sample_values:
+            if pd.notna(val):
+                val_str = str(val)
+                # Check if it looks like a date/datetime.
+                if ('2024' in val_str or '2023' in val_str or '2025' in val_str or 
+                    '2022' in val_str or ':' in val_str):
+                    try:
+                        # Try to parse as datetime.
+                        pd.to_datetime(val_str)
+                        date_like_count += 1
+                    except (ValueError, TypeError, pd.errors.OutOfBoundsDatetime) as exc:
+                        # Expected errors when the string is not a valid date.
+                        logger.debug("Invalid date format for value '%s': %s", val_str, exc)
+                        continue
+        if date_like_count >= 3:  # At least 3 out of 5 samples are valid dates.
+            logger.info("Found timestamp column at index %s using data analysis", col_idx)
+            return col_idx
+    # If still not found, look for the column just before the consumption data.
+    # This is usually the pattern: [Timestamps] [Consumption] [Other...].
+    try:
+        consumption_col = find_consumption_column(excel_df, "MEASURED ACTIVE CONSUMPTION")
+        if consumption_col > 0:
+            timestamp_col = consumption_col - 1
+            logger.info(
+                "Inferred timestamp column at index %s (one column before consumption)",
+                timestamp_col
+            )
+            return timestamp_col
+    except (ValueError, KeyError) as exc:
+        # If we can't find the consumption column, continue with other methods.
+        logger.debug("Could not infer timestamp column from consumption column: %s", exc)
+    # Final fallback - check column 0 for timestamps.
+    data_start_row = find_data_start_row(excel_df)
+    if data_start_row < len(excel_df):
+        sample_val = excel_df.iloc[data_start_row, 0]
+        if pd.notna(sample_val):
+            val_str = str(sample_val)
+            if ('2024' in val_str or '2023' in val_str or '2025' in val_str or 
+                '2022' in val_str or ':' in val_str):
+                logger.info("Using column 0 as timestamp column (detected date pattern)")
+                return 0
+    # Final fallback.
+    logger.warning("Could not detect timestamp column reliably, using column 0")
+    return 0
 
 # ----------------------------------------------------------------------------------------------- #
 # ------------------------------------------ MAIN FUNCTION -------------------------------------- #
